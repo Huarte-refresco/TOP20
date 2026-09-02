@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACTA TOP 20 · Marcilla</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EDEFF1;
+    --panel:#FFFFFF;
+    --ink:#1B2430;
+    --ink-soft:#5A6472;
+    --line:#D7DCE1;
+    --amber:#F2A900;
+    --amber-deep:#B37B00;
+    --red:#D64545;
+    --green:#2E7D4F;
+    --navy-panel:#1B2430;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+  }
+  .app{
+    display:flex;
+    min-height:100vh;
+  }
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:250px;
+    flex-shrink:0;
+    background:var(--navy-panel);
+    color:#fff;
+    display:flex;
+    flex-direction:column;
+    padding:20px 0 12px;
+  }
+  .brand{
+    padding:0 18px 16px;
+    border-bottom:1px solid rgba(255,255,255,0.12);
+    margin-bottom:8px;
+  }
+  .brand .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:.14em;
+    color:var(--amber);
+    text-transform:uppercase;
+  }
+  .brand h1{
+    font-family:'Barlow Condensed', sans-serif;
+    font-weight:800;
+    font-size:26px;
+    letter-spacing:.02em;
+    margin:2px 0 10px;
+    line-height:1;
+  }
+  .date-picker{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .date-picker label{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:rgba(255,255,255,0.55);
+  }
+  .date-picker input[type=date]{
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.18);
+    color:#fff;
+    border-radius:6px;
+    padding:6px 8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color-scheme:dark;
+  }
+  .navlist{
+    list-style:none;
+    margin:8px 0 0;
+    padding:0 8px;
+    overflow-y:auto;
+    flex:1;
+  }
+  .navlist li{margin-bottom:2px;}
+  .navlist button{
+    width:100%;
+    text-align:left;
+    background:transparent;
+    border:none;
+    color:rgba(255,255,255,0.72);
+    padding:9px 10px;
+    border-radius:7px;
+    cursor:pointer;
+    font-family:'IBM Plex Sans', sans-serif;
+    display:flex;
+    align-items:center;
+    gap:9px;
+  }
+  .navlist button .dept-name{
+    font-weight:600;
+    font-size:13.5px;
+  }
+  .navlist button .dept-person{
+    display:block;
+    font-size:10.5px;
+    color:rgba(255,255,255,0.4);
+    font-weight:400;
+  }
+  .navlist button:hover{background:rgba(255,255,255,0.06);}
+  .navlist button.active{
+    background:rgba(242,169,0,0.14);
+    color:#fff;
+  }
+  .navlist button.active .dot{background:var(--amber);}
+  .navlist button .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:rgba(255,255,255,0.25);
+    flex-shrink:0;
+  }
+  .navlist button.filled .dot{background:var(--green);}
+  .navlist .resumen-btn{
+    border-top:1px solid rgba(255,255,255,0.12);
+    margin-top:6px;
+    padding-top:10px;
+  }
+  .sidebar-foot{
+    padding:10px 18px 0;
+    font-size:10.5px;
+    color:rgba(255,255,255,0.35);
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  /* ---------- MAIN ---------- */
+  .main{
+    flex:1;
+    padding:28px 34px 60px;
+    max-width:920px;
+  }
+  .topline{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:22px;
+  }
+  .topline .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.1em;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+  }
+  .topline h2{
+    font-family:'Barlow Condensed', sans-serif;
+    font-weight:800;
+    font-size:32px;
+    margin:2px 0 0;
+  }
+  .save-state{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+  }
+  .save-state.saving{color:var(--amber-deep);}
+  .save-state.saved{color:var(--green);}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px 24px;
+    margin-bottom:18px;
+  }
+
+  /* timer block */
+  .timer-block{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  .timer-display{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size:44px;
+    letter-spacing:.03em;
+    color:var(--navy-panel);
+    background:#0E141C;
+    color:var(--amber);
+    padding:8px 20px;
+    border-radius:8px;
+    box-shadow:inset 0 0 0 1px #000;
+    min-width:150px;
+    text-align:center;
+  }
+  .timer-display.running{
+    animation:pulseglow 1.4s ease-in-out infinite;
+  }
+  @keyframes pulseglow{
+    0%,100%{box-shadow:inset 0 0 0 1px #000, 0 0 0 0 rgba(242,169,0,0.0);}
+    50%{box-shadow:inset 0 0 0 1px #000, 0 0 14px 0 rgba(242,169,0,0.35);}
+  }
+  .timer-meta{display:flex;flex-direction:column;gap:8px;}
+  .timer-row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-soft);}
+  .timer-row .objetivo-input{
+    width:64px;
+    font-family:'IBM Plex Mono', monospace;
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:4px 6px;
+    font-size:13px;
+  }
+  .timer-buttons{display:flex;gap:8px;}
+  .btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    border:none;
+    border-radius:7px;
+    padding:10px 16px;
+    cursor:pointer;
+  }
+  .btn-start{background:var(--amber); color:#251900;}
+  .btn-start:hover{background:var(--amber-deep); color:#fff;}
+  .btn-stop{background:var(--red); color:#fff;}
+  .btn-reset{background:transparent; color:var(--ink-soft); border:1px solid var(--line);}
+  .over-target{color:var(--red) !important;}
+
+  .fields h3{
+    font-family:'Barlow Condensed', sans-serif;
+    font-size:18px;
+    font-weight:700;
+    letter-spacing:.02em;
+    margin:0 0 12px;
+    color:var(--ink);
+  }
+  .field-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(140px,1fr));
+    gap:12px;
+    margin-bottom:14px;
+  }
+  .field label{
+    display:block;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink-soft);
+    margin-bottom:4px;
+  }
+  .field input[type=text], .field input[type=number]{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:8px 10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    background:#FAFBFC;
+  }
+  textarea{
+    width:100%;
+    min-height:90px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:10px 12px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13.5px;
+    resize:vertical;
+    background:#FAFBFC;
+  }
+  .checkline{
+    display:flex; align-items:center; gap:8px;
+    font-size:13px; color:var(--ink-soft);
+    margin-top:4px;
+  }
+
+  /* resumen */
+  .resumen-table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  .resumen-table th{
+    text-align:left;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink-soft);
+    padding:8px 10px;
+    border-bottom:1px solid var(--line);
+  }
+  .resumen-table td{padding:9px 10px; border-bottom:1px solid #F0F2F4;}
+  .resumen-table td.num{font-family:'IBM Plex Mono', monospace;}
+  .bar-cell{width:170px;}
+  .bar-track{background:#EEF0F2; border-radius:4px; height:8px; overflow:hidden;}
+  .bar-fill{height:100%; background:var(--amber);}
+  .bar-fill.over{background:var(--red);}
+  .row-total td{font-weight:700; border-top:2px solid var(--ink); border-bottom:none;}
+  .kpi-strip{display:flex; gap:14px; margin-bottom:18px; flex-wrap:wrap;}
+  .kpi{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 18px; min-width:120px;
+  }
+  .kpi .kpi-label{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-soft);}
+  .kpi .kpi-value{font-family:'Barlow Condensed', sans-serif; font-weight:800; font-size:28px; margin-top:2px;}
+
+  .empty-note{
+    font-size:12.5px; color:var(--ink-soft); font-style:italic; margin-top:2px;
+  }
+
+  /* media */
+  .media-block{margin-top:16px; padding-top:16px; border-top:1px solid var(--line);}
+  .media-block h3{margin-bottom:8px;}
+  .media-hint{font-size:12px; color:var(--ink-soft); margin:-4px 0 12px;}
+  .photo-strip{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+  .photo-thumb{
+    position:relative; width:84px; height:84px; border-radius:7px; overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .photo-thumb img{width:100%; height:100%; object-fit:cover; display:block;}
+  .photo-thumb button{
+    position:absolute; top:2px; right:2px; width:18px; height:18px; border-radius:50%;
+    background:rgba(27,36,48,0.75); color:#fff; border:none; cursor:pointer;
+    font-size:11px; line-height:1; padding:0;
+  }
+  .add-photo-btn{
+    width:84px; height:84px; border-radius:7px; border:1.5px dashed var(--line);
+    background:#FAFBFC; color:var(--ink-soft); cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:11px; text-align:center;
+  }
+  .add-photo-btn:hover{border-color:var(--amber-deep); color:var(--amber-deep);}
+  .field.link-field{max-width:420px;}
+  .field.link-field input{font-family:'IBM Plex Sans', sans-serif;}
+
+  /* lightbox */
+  .lightbox{
+    position:fixed; inset:0; background:rgba(14,20,28,0.88);
+    display:none; align-items:center; justify-content:center; z-index:50; padding:30px;
+  }
+  .lightbox.open{display:flex;}
+  .lightbox img{max-width:100%; max-height:100%; border-radius:8px;}
+  .lightbox-close{
+    position:absolute; top:18px; right:24px; background:transparent; border:none;
+    color:#fff; font-size:26px; cursor:pointer;
+  }
+
+  /* modal (editor de semana) */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(14,20,28,0.55);
+    display:none; align-items:center; justify-content:center; z-index:60; padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:var(--panel); border-radius:var(--radius); padding:22px 24px;
+    width:100%; max-width:480px; max-height:85vh; overflow-y:auto;
+    box-shadow:0 12px 40px rgba(0,0,0,0.25);
+  }
+  .modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+  .modal-head h3{font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:800; margin:0;}
+  .modal-close{background:transparent; border:none; font-size:18px; cursor:pointer; color:var(--ink-soft);}
+  .modal-box table{width:100%; border-collapse:collapse;}
+  .modal-box th{
+    text-align:left; font-family:'IBM Plex Mono', monospace; font-size:10px; text-transform:uppercase;
+    color:var(--ink-soft); padding:6px 6px; border-bottom:1px solid var(--line);
+  }
+  .modal-box td{padding:7px 6px; border-bottom:1px solid #F0F2F4; font-size:13px;}
+  .modal-box .day-cell span{display:block; font-size:10.5px; color:var(--ink-soft);}
+  .modal-box input[type=number]{
+    width:76px; border:1px solid var(--line); border-radius:6px; padding:5px 7px;
+    font-family:'IBM Plex Mono', monospace; font-size:13px;
+  }
+
+  /* informe visual */
+  .informe-actions{display:flex; gap:10px;}
+  .btn.small{padding:6px 12px; font-size:12px;}
+  .informe-dept{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:20px 22px; margin-bottom:14px; page-break-inside:avoid;
+  }
+  .informe-dept-head{
+    display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;
+    border-bottom:1px solid var(--line); padding-bottom:8px; gap:14px;
+  }
+  .informe-dept-head h4{
+    font-family:'Barlow Condensed', sans-serif; font-size:20px; font-weight:800; margin:0;
+  }
+  .informe-dept-head .person{font-size:12px; color:var(--ink-soft);}
+  .informe-time-wrap{text-align:right; flex-shrink:0;}
+  .informe-time{font-family:'IBM Plex Mono', monospace; font-size:19px; font-weight:700; color:var(--ink);}
+  .informe-time.over{color:var(--red);}
+  .informe-time-sub{font-size:11px; color:var(--ink-soft); margin:1px 0 6px;}
+  .btn-sm{padding:5px 11px; font-size:11.5px;}
+  .informe-kv{display:flex; gap:18px; flex-wrap:wrap; margin-bottom:8px;}
+  .informe-kv div{font-size:13px;}
+  .informe-kv span{display:block; font-size:10px; text-transform:uppercase; color:var(--ink-soft); letter-spacing:.05em;}
+  .informe-notes{font-size:13.5px; white-space:pre-wrap; margin:6px 0 10px;}
+  .informe-notes:empty::before{content:'— sin comentarios —'; color:var(--ink-soft); font-style:italic;}
+  .informe-photos{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px;}
+  .informe-photos img{width:220px; border-radius:8px; border:1px solid var(--line); cursor:zoom-in;}
+  .informe-link{font-size:12.5px;}
+  .informe-link a{color:var(--amber-deep);}
+  .oee-chart-wrap svg{display:block;}
+  .oee-chart-block{margin-bottom:16px;}
+  .oee-chart-block:last-child{margin-bottom:0;}
+  .oee-chart-title{
+    font-family:'IBM Plex Mono', monospace; font-size:11px; text-transform:uppercase;
+    letter-spacing:.05em; color:var(--ink-soft); margin-bottom:4px;
+  }
+
+  @media print{
+    .sidebar, .no-print{display:none !important;}
+    body{background:#fff;}
+    .main{max-width:100%; padding:0; margin:0;}
+    .informe-dept{border:1px solid #ccc; box-shadow:none;}
+    .panel{box-shadow:none;}
+  }
+
+  @media (max-width:760px){
+    .app{flex-direction:column;}
+    .sidebar{width:100%; flex-direction:row; overflow-x:auto; padding:12px;}
+    .brand{border-bottom:none; padding:0 12px 0 0; margin:0; flex-shrink:0;}
+    .navlist{display:flex; flex-direction:row; padding:0; overflow-x:auto;}
+    .navlist li{margin:0 2px;}
+    .navlist button{white-space:nowrap;}
+    .navlist button .dept-person{display:none;}
+    .sidebar-foot{display:none;}
+    .main{padding:20px 16px 50px;}
+    .timer-display{font-size:32px; padding:8px 14px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <nav class="sidebar">
+    <div class="brand">
+      <div class="eyebrow">Refresco · Marcilla</div>
+      <h1>ACTA TOP 20</h1>
+      <div class="date-picker">
+        <label for="datePick">Fecha de la reunión</label>
+        <input type="date" id="datePick">
+      </div>
+    </div>
+    <ul class="navlist" id="navlist"></ul>
+    <div class="sidebar-foot" id="syncNote">Tablero compartido · todos ven los mismos datos</div>
+  </nav>
+
+  <main class="main" id="main"></main>
+
+</div>
+
+<div class="lightbox no-print" id="lightbox">
+  <button class="lightbox-close" id="lightboxClose">✕</button>
+  <img id="lightboxImg" src="" alt="Foto ampliada">
+</div>
+
+<div class="modal-overlay no-print" id="weekEditorOverlay">
+  <div class="modal-box" id="weekEditorBox"></div>
+</div>
+
+<script>
+/* ---------------- CONFIG ---------------- */
+const DEPARTMENTS = [
+  { id:'ehs', name:'EHS', fields:[
+      {key:'accidentes', label:'Accidentes', type:'number'},
+      {key:'incidentes', label:'Incidentes', type:'number'},
+      {key:'recordables', label:'Recordables', type:'number'},
+    ], notesLabel:'Comentarios' },
+  { id:'rrhh', name:'RRHH', fields:[
+      {key:'bajas', label:'Bajas', type:'number'},
+      {key:'ett', label:'ETT', type:'number'},
+    ], notesLabel:'Comentarios' },
+  { id:'control', name:'Control', fields:[], notesLabel:'Comentarios' },
+  { id:'logistica', name:'Logística', fields:[], notesLabel:'Comentarios generales',
+    photoSlots:[
+      {key:'planSemanal', label:'Planificación semanal'},
+      {key:'l8', label:'Prodplan L8', pairedTextKey:'comentariosL8', pairedTextLabel:'Comentarios L8'},
+      {key:'l9', label:'Prodplan L9', pairedTextKey:'comentariosL9', pairedTextLabel:'Comentarios L9'},
+    ]
+  },
+  { id:'calidad', name:'Calidad', fields:[
+      {key:'ftr', label:'FTR %', type:'text'},
+    ], notesLabel:'Incidencias',
+    textSections:[
+      {key:'reclamaciones', label:'Reclamaciones'},
+    ]
+  },
+  { id:'produccion', name:'Producción', fields:[
+      {key:'oee_l29', label:'OEE Línea 29', type:'number'},
+      {key:'oee_l28', label:'OEE Línea 28', type:'number'},
+    ], notesLabel:'Incidencias',
+    textSections:[
+      {key:'comentariosL29', label:'Comentarios Línea 29'},
+      {key:'comentariosL28', label:'Comentarios Línea 28'},
+    ]
+  },
+  { id:'mto', name:'Mantenimiento', fields:[], notesLabel:'Incidencias' },
+  { id:'pex', name:'PEX', fields:[], notesLabel:'Incidencias' },
+  { id:'jefeplanta', name:'Jefe de Planta', fields:[], notesLabel:'Cierre / Acciones' },
+];
+const OEE_LINES = [
+  { key:'oee_l29', label:'OEE Línea 29' },
+  { key:'oee_l28', label:'OEE Línea 28' },
+];
+
+let state = { date: todayISO(), active: 'resumen', deptData: {}, timers: {} };
+let tickHandle = null;
+
+function pad2(n){ return String(n).padStart(2,'0'); }
+function localISO(date){
+  return `${date.getFullYear()}-${pad2(date.getMonth()+1)}-${pad2(date.getDate())}`;
+}
+function todayISO(){
+  return localISO(new Date());
+}
+function keyFor(date, id){ return 'acta:' + date + ':' + id; }
+
+/* ---------------- STORAGE (servidor propio + SQLite) ---------------- */
+function fetchWithTimeout(url, opts, ms){
+  const controller = new AbortController();
+  const t = setTimeout(()=>controller.abort(), ms || 8000);
+  return fetch(url, Object.assign({}, opts, { signal: controller.signal }))
+    .finally(()=> clearTimeout(t));
+}
+async function storageGet(key){
+  const res = await fetchWithTimeout('/api/kv/' + encodeURIComponent(key));
+  if(res.status === 404) return null;
+  if(res.status === 401) throw new Error('No autorizado (401) — vuelve a iniciar sesión.');
+  if(!res.ok) throw new Error('GET ' + res.status);
+  const data = await res.json();
+  return { value: data.value };
+}
+async function storageSet(key, value){
+  const res = await fetchWithTimeout('/api/kv/' + encodeURIComponent(key), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ value })
+  });
+  if(res.status === 401) throw new Error('No autorizado (401) — vuelve a iniciar sesión.');
+  if(!res.ok) throw new Error('SET ' + res.status);
+  return true;
+}
+async function storageDelete(key){
+  const res = await fetchWithTimeout('/api/kv/' + encodeURIComponent(key), { method: 'DELETE' });
+  if(res.status === 401) throw new Error('No autorizado (401) — vuelve a iniciar sesión.');
+  if(!res.ok && res.status !== 404) throw new Error('DELETE ' + res.status);
+  return true;
+}
+function blankDeptData(){
+  return {
+    objetivo: 3,
+    elapsedSec: 0,
+    running: false,
+    startedAt: null,
+    puntual: true,
+    notes: '',
+    jarabesNotes: '',
+    fields: {},
+    extra: {},
+    photos: [],
+    namedPhotos: {},
+    mediaLink: ''
+  };
+}
+async function loadDeptDay(date, deptId){
+  try{
+    const res = await storageGet(keyFor(date, deptId));
+    if(res) return Object.assign(blankDeptData(), JSON.parse(res.value));
+  }catch(e){ console.error('loadDeptDay', deptId, date, e); }
+  return blankDeptData();
+}
+async function loadDay(date){
+  const data = {};
+  await Promise.all(DEPARTMENTS.map(async dept=>{
+    data[dept.id] = await loadDeptDay(date, dept.id);
+  }));
+  try{
+    const metaRes = await storageGet(keyFor(date, 'meta'));
+    data._acciones = metaRes ? (JSON.parse(metaRes.value).acciones || 0) : 0;
+  }catch(e){
+    data._acciones = 0;
+  }
+  return data;
+}
+let saveTimeouts = {};
+let pendingSaves = {};
+let saveErrorAlerted = new Set();
+async function doSaveNow(id, date, payload){
+  try{
+    await storageSet(keyFor(date, id), JSON.stringify(payload), true);
+    setSaveState('saved');
+    saveErrorAlerted.delete(id);
+    await recordDayIndex(date);
+  }catch(e){
+    setSaveState('error');
+    console.error('Fallo al guardar', id, date, e);
+    if(!saveErrorAlerted.has(id)){
+      saveErrorAlerted.add(id);
+      const name = id==='meta' ? 'el resumen' : (DEPARTMENTS.find(x=>x.id===id)?.name||id);
+      alert('No se ha podido guardar "'+name+'".\nError: '+(e && e.message ? e.message : e)+'\n\nSi el error menciona tamaño/cuota, prueba a quitar fotos de otros días o avísame con este mensaje exacto para revisarlo.');
+    }
+  }
+}
+function scheduleSave(id){
+  setSaveState('saving');
+  clearTimeout(saveTimeouts[id]);
+  // Se "congela" la fecha y el contenido en el momento del cambio, para que
+  // un cambio de día antes de que dispare el guardado no escriba en el día equivocado.
+  const date = state.date;
+  const payload = id === 'meta'
+    ? { acciones: state.deptData._acciones || 0 }
+    : state.deptData[id];
+  pendingSaves[id] = { date, payload };
+  saveTimeouts[id] = setTimeout(()=>{
+    const p = pendingSaves[id];
+    delete pendingSaves[id];
+    if(p) doSaveNow(id, p.date, p.payload);
+  }, 350);
+}
+async function flushPendingSaves(){
+  const ids = Object.keys(pendingSaves);
+  for(const id of ids){
+    clearTimeout(saveTimeouts[id]);
+    const p = pendingSaves[id];
+    delete pendingSaves[id];
+    if(p) await doSaveNow(id, p.date, p.payload);
+  }
+}
+async function recordDayIndex(date){
+  try{
+    const res = await storageGet('acta:dias-guardados', true);
+    let list = res ? JSON.parse(res.value) : [];
+    if(!list.includes(date)){
+      list.push(date);
+      list.sort();
+      await storageSet('acta:dias-guardados', JSON.stringify(list), true);
+    }
+  }catch(e){ /* noop */ }
+}
+function setSaveState(s){
+  const el = document.getElementById('saveState');
+  if(!el) return;
+  el.className = 'save-state ' + s;
+  el.textContent = s==='saving' ? 'Guardando…' : s==='saved' ? 'Guardado' : 'Sin conexión';
+}
+
+/* ---------------- TIMER ---------------- */
+function liveElapsed(d){
+  let sec = d.elapsedSec;
+  if(d.running && d.startedAt){
+    sec += (Date.now() - d.startedAt)/1000;
+  }
+  return sec;
+}
+function fmt(sec){
+  sec = Math.max(0, Math.round(sec));
+  const m = Math.floor(sec/60).toString().padStart(2,'0');
+  const s = (sec%60).toString().padStart(2,'0');
+  return m+':'+s;
+}
+function startTimer(deptId){
+  const d = state.deptData[deptId];
+  if(d.running) return;
+  d.running = true;
+  d.startedAt = Date.now();
+  scheduleSave(deptId);
+  render();
+  ensureTicking();
+}
+function stopTimer(deptId){
+  const d = state.deptData[deptId];
+  if(!d.running) return;
+  d.elapsedSec += (Date.now() - d.startedAt)/1000;
+  d.running = false;
+  d.startedAt = null;
+  scheduleSave(deptId);
+  render();
+}
+function resetTimer(deptId){
+  const d = state.deptData[deptId];
+  d.elapsedSec = 0;
+  d.running = false;
+  d.startedAt = null;
+  scheduleSave(deptId);
+  render();
+}
+function ensureTicking(){
+  if(tickHandle) return;
+  tickHandle = setInterval(()=>{
+    const anyRunning = Object.values(state.deptData).some(d=>d.running);
+    if(!anyRunning){ clearInterval(tickHandle); tickHandle=null; return; }
+    updateTimerDisplaysOnly();
+  }, 500);
+}
+function updateTimerDisplaysOnly(){
+  if(state.active === 'resumen'){ renderResumenTable(); return; }
+  if(state.active === 'informe'){
+    document.querySelectorAll('[data-timerfor]').forEach(el=>{
+      const d = state.deptData[el.dataset.timerfor];
+      if(!d) return;
+      el.textContent = fmt(liveElapsed(d));
+      el.classList.toggle('over', liveElapsed(d) > d.objetivo*60);
+    });
+    renderKpiStripOnly();
+    return;
+  }
+  const el = document.querySelector('.timer-display');
+  if(el){
+    const d = state.deptData[state.active];
+    if(d){
+      el.textContent = fmt(liveElapsed(d));
+      const overTarget = liveElapsed(d) > d.objetivo*60;
+      el.classList.toggle('over-target', overTarget);
+    }
+  }
+}
+
+/* ---------------- RENDER ---------------- */
+function renderNav(){
+  const nav = document.getElementById('navlist');
+  nav.innerHTML = '';
+  const resumenLi = document.createElement('li');
+  resumenLi.className = 'resumen-btn';
+  resumenLi.innerHTML = '';
+  nav.appendChild(makeNavButton({id:'resumen', name:'Resumen del día', person:'Tiempos y acciones'}, true));
+  DEPARTMENTS.forEach(dept=>{
+    nav.appendChild(makeNavButton(dept, false));
+  });
+}
+function makeNavButton(dept, isResumen){
+  const li = document.createElement('li');
+  const btn = document.createElement('button');
+  const d = state.deptData[dept.id];
+  const filled = !isResumen && d && (d.notes.trim() || d.elapsedSec>0 || Object.values(d.fields||{}).some(v=>v));
+  btn.className = 'nav-btn' + (state.active===dept.id ? ' active':'') + (filled ? ' filled':'');
+  btn.innerHTML = `<span class="dot"></span><span class="dept-name">${dept.name}</span>`;
+  btn.onclick = ()=>{ state.active = dept.id; render(); };
+  li.appendChild(btn);
+  return li;
+}
+
+function render(){
+  renderNav();
+  document.querySelectorAll('.navlist button').forEach(b=>{});
+  const main = document.getElementById('main');
+  if(state.active === 'resumen'){
+    main.innerHTML = resumenTemplate();
+    renderResumenTable();
+    wireResumenEvents();
+  } else if(state.active === 'informe'){
+    main.innerHTML = informeTemplate();
+    wireInformeEvents();
+  } else {
+    const dept = DEPARTMENTS.find(x=>x.id===state.active);
+    main.innerHTML = deptTemplate(dept);
+    wireDeptEvents(dept);
+  }
+}
+
+function resumenTemplate(){
+  return `
+    <div class="topline">
+      <div>
+        <div class="eyebrow">${prettyDate(state.date)}</div>
+        <h2>Resumen de la reunión</h2>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="btn btn-start no-print" id="goInformeBtn">Generar informe visual</button>
+        <div class="save-state" id="saveState">—</div>
+      </div>
+    </div>
+    <div class="kpi-strip" id="kpiStrip"></div>
+    <div class="panel">
+      <table class="resumen-table">
+        <thead><tr>
+          <th>Departamento</th><th>Objetivo</th><th>Real</th><th class="bar-cell">Real vs objetivo</th>
+        </tr></thead>
+        <tbody id="resumenBody"></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h3 style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;margin:0 0 10px;">Acciones abiertas del día</h3>
+      <div class="field" style="max-width:140px;">
+        <label>Nº de acciones</label>
+        <input type="number" id="accionesInput" min="0">
+      </div>
+    </div>
+  `;
+}
+function renderResumenTable(){
+  const body = document.getElementById('resumenBody');
+  const kpiStrip = document.getElementById('kpiStrip');
+  if(!body) return;
+  let totalObj=0, totalReal=0, rows='';
+  DEPARTMENTS.forEach(dept=>{
+    const d = state.deptData[dept.id];
+    const real = liveElapsed(d)/60;
+    const obj = d.objetivo;
+    totalObj += obj; totalReal += real;
+    const pct = obj>0 ? Math.min(100, (real/obj)*100) : 0;
+    const over = real > obj;
+    rows += `<tr>
+      <td>${dept.name}</td>
+      <td class="num">${obj.toFixed(1)} min</td>
+      <td class="num ${over?'over-target':''}">${fmt(liveElapsed(d))}</td>
+      <td class="bar-cell"><div class="bar-track"><div class="bar-fill ${over?'over':''}" style="width:${pct}%"></div></div></td>
+    </tr>`;
+  });
+  rows += `<tr class="row-total">
+    <td>Total</td><td class="num">${totalObj.toFixed(1)} min</td>
+    <td class="num">${totalReal.toFixed(1)} min</td><td></td>
+  </tr>`;
+  body.innerHTML = rows;
+
+  const puntualCount = DEPARTMENTS.filter(dep=>state.deptData[dep.id].puntual).length;
+  kpiStrip.innerHTML = `
+    <div class="kpi"><div class="kpi-label">Objetivo total</div><div class="kpi-value">${totalObj.toFixed(0)}m</div></div>
+    <div class="kpi"><div class="kpi-label">Real total</div><div class="kpi-value">${totalReal.toFixed(0)}m</div></div>
+    <div class="kpi"><div class="kpi-label">Puntualidad</div><div class="kpi-value">${puntualCount}/${DEPARTMENTS.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Acciones</div><div class="kpi-value">${state.deptData._acciones||0}</div></div>
+  `;
+  const accIn = document.getElementById('accionesInput');
+  if(accIn) accIn.value = state.deptData._acciones||0;
+}
+function wireResumenEvents(){
+  document.getElementById('accionesInput').oninput = (e)=>{
+    state.deptData._acciones = parseInt(e.target.value||0,10);
+    scheduleSave('meta');
+    renderResumenTable();
+  };
+  document.getElementById('goInformeBtn').onclick = ()=>{
+    state.active = 'informe';
+    render();
+  };
+}
+
+/* ---------------- INFORME VISUAL ---------------- */
+function informeTemplate(){
+  const deptCards = DEPARTMENTS.map(dept=>{
+    const d = state.deptData[dept.id];
+    const real = liveElapsed(d);
+    const over = real > d.objetivo*60;
+    const fieldsHtml = dept.fields.length ? `<div class="informe-kv">${dept.fields.map(f=>`
+        <div><span>${f.label}</span>${d.fields[f.key] ?? '—'}</div>`).join('')}</div>` : '';
+    const textSectionsHtml = (dept.textSections||[]).map(sec=>`
+        <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">${sec.label}</h5>
+        <div class="informe-notes">${escapeHtml((d.extra && d.extra[sec.key]) || '')}</div>`).join('');
+    const namedPhotosHtml = dept.photoSlots ? dept.photoSlots.map(slot=>{
+      const photo = (d.namedPhotos && d.namedPhotos[slot.key]) || null;
+      const pairedText = slot.pairedTextKey ? (d.extra && d.extra[slot.pairedTextKey]) || '' : '';
+      return `
+        <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">${slot.label}</h5>
+        ${photo ? `<div class="informe-photos"><img src="${photo.dataUrl}" data-lightbox="1" alt="${slot.label}"></div>` : `<p class="empty-note">Sin foto.</p>`}
+        ${slot.pairedTextKey ? `<div class="informe-notes">${escapeHtml(pairedText)}</div>` : ''}
+      `;
+    }).join('') : '';
+    const photosHtml = (!dept.photoSlots && (d.photos||[]).length) ? `<div class="informe-photos">${d.photos.map((p,i)=>`
+        <img src="${p.dataUrl}" data-lightbox="1" alt="${dept.name} foto ${i+1}">`).join('')}</div>` : '';
+    const linkHtml = d.mediaLink ? `<div class="informe-link">🔗 <a href="${d.mediaLink}" target="_blank" rel="noopener">${d.mediaLink}</a></div>` : '';
+    const jarabesInformeHtml = dept.id === 'produccion' ? `
+        <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">Jarabes</h5>
+        <div class="informe-notes">${escapeHtml(d.jarabesNotes||'')}</div>` : '';
+    const oeeInformeHtml = dept.id === 'produccion' ? `
+        <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:12px 0 4px;">Evolución OEE</h5>
+        <div id="oeeEvolution-informe"><p class="empty-note">Cargando evolución...</p></div>` : '';
+    return `
+      <div class="informe-dept">
+        <div class="informe-dept-head">
+          <div>
+            <h4>${dept.name}</h4>
+          </div>
+          <div class="informe-time-wrap">
+            <div class="informe-time ${over?'over':''}" data-timerfor="${dept.id}">${fmt(real)}</div>
+            <div class="informe-time-sub">obj. ${d.objetivo} min · ${d.puntual?'puntual':'no puntual'}</div>
+            <button class="btn ${d.running?'btn-stop':'btn-start'} btn-sm no-print" data-toggletimer="${dept.id}">${d.running?'Parar':'Iniciar'}</button>
+          </div>
+        </div>
+        ${fieldsHtml}
+        ${textSectionsHtml}
+        <div class="informe-notes">${escapeHtml(d.notes||'')}</div>
+        ${jarabesInformeHtml}
+        ${namedPhotosHtml}
+        ${photosHtml}
+        ${linkHtml}
+        ${oeeInformeHtml}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="topline">
+      <div>
+        <div class="eyebrow">${prettyDate(state.date)} · Informe visual</div>
+        <h2>ACTA TOP 20</h2>
+      </div>
+      <div class="informe-actions no-print">
+        <button class="btn btn-reset" id="backToResumenBtn">Volver</button>
+        <button class="btn btn-start" id="printBtn">Imprimir / Guardar PDF</button>
+      </div>
+    </div>
+    <div class="kpi-strip" id="kpiStrip"></div>
+    ${deptCards}
+  `;
+}
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+function wireInformeEvents(){
+  document.getElementById('backToResumenBtn').onclick = ()=>{ state.active='resumen'; render(); };
+  document.getElementById('printBtn').onclick = ()=> window.print();
+  document.querySelectorAll('[data-lightbox]').forEach(img=>{
+    img.onclick = ()=> openLightbox(img.src);
+  });
+  document.querySelectorAll('[data-toggletimer]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const id = btn.dataset.toggletimer;
+      const dd = state.deptData[id];
+      if(dd.running) stopTimer(id); else startTimer(id);
+    };
+  });
+  if(Object.values(state.deptData).some(d=>d && d.running)) ensureTicking();
+  renderKpiStripOnly();
+  renderOeeCharts('oeeEvolution-informe');
+}
+function renderKpiStripOnly(){
+  const kpiStrip = document.getElementById('kpiStrip');
+  if(!kpiStrip) return;
+  let totalObj=0, totalReal=0;
+  DEPARTMENTS.forEach(dept=>{
+    const d = state.deptData[dept.id];
+    totalObj += d.objetivo; totalReal += liveElapsed(d)/60;
+  });
+  const puntualCount = DEPARTMENTS.filter(dep=>state.deptData[dep.id].puntual).length;
+  kpiStrip.innerHTML = `
+    <div class="kpi"><div class="kpi-label">Objetivo total</div><div class="kpi-value">${totalObj.toFixed(0)}m</div></div>
+    <div class="kpi"><div class="kpi-label">Real total</div><div class="kpi-value">${totalReal.toFixed(0)}m</div></div>
+    <div class="kpi"><div class="kpi-label">Puntualidad</div><div class="kpi-value">${puntualCount}/${DEPARTMENTS.length}</div></div>
+    <div class="kpi"><div class="kpi-label">Acciones</div><div class="kpi-value">${state.deptData._acciones||0}</div></div>
+  `;
+}
+
+/* ---- evolución OEE (2 líneas) con medias semanal y mensual ---- */
+function getWeekDates(isoDateStr){
+  const [y,m,dd] = isoDateStr.split('-').map(Number);
+  const d = new Date(y, m-1, dd);
+  const day = d.getDay();
+  const diffToMonday = (day===0 ? -6 : 1-day);
+  const monday = new Date(d); monday.setDate(d.getDate()+diffToMonday);
+  const dates = [];
+  for(let i=0;i<7;i++){
+    const dt = new Date(monday); dt.setDate(monday.getDate()+i);
+    dates.push(localISO(dt));
+  }
+  return dates;
+}
+function getMonthWeekdayDates(isoDateStr){
+  const [y,m,dd] = isoDateStr.split('-').map(Number);
+  const today = new Date(y, m-1, dd);
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const dates = [];
+  for(let day=1; day<=daysInMonth; day++){
+    const dt = new Date(y, m-1, day);
+    if(dt > today) continue;               // día futuro, no cuenta
+    const dow = dt.getDay();
+    if(dow===0 || dow===6) continue;        // fin de semana, no cuenta
+    dates.push(localISO(dt));
+  }
+  return dates;
+}
+function average(values){
+  const clean = values.filter(v=>v!=null && !isNaN(v));
+  if(!clean.length) return null;
+  return clean.reduce((a,b)=>a+b,0)/clean.length;
+}
+async function renderOeeCharts(containerId){
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  const weekDates = getWeekDates(state.date);
+  const monthDates = getMonthWeekdayDates(state.date);
+  const neededDates = Array.from(new Set([...weekDates, ...monthDates]));
+  const dayCache = {};
+  await Promise.all(neededDates.map(async date=>{
+    dayCache[date] = (date === state.date) ? state.deptData.produccion : await loadDeptDay(date, 'produccion');
+  }));
+  const valueFor = (date, lineKey)=>{
+    const dd = dayCache[date];
+    const raw = dd && dd.fields ? dd.fields[lineKey] : null;
+    if(raw === null || raw === undefined || raw === '') return null;
+    const parsed = parseFloat(raw);
+    return isNaN(parsed) ? null : parsed;
+  };
+  container.innerHTML = OEE_LINES.map(line=>{
+    const points = weekDates.map(date=>({ date, oee: valueFor(date, line.key) }));
+    // media semanal: solo días L-V, sin contar futuros ni vacíos
+    const today = new Date(state.date+'T00:00:00');
+    const weekAvgVals = weekDates.filter(date=>{
+      const dt = new Date(date+'T00:00:00');
+      const dow = dt.getDay();
+      return dow!==0 && dow!==6 && dt<=today;
+    }).map(date=> valueFor(date, line.key));
+    const weekAvg = average(weekAvgVals);
+    const monthAvg = average(monthDates.map(date=> valueFor(date, line.key)));
+    return `<div class="oee-chart-block">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px;">
+        <div class="oee-chart-title">${line.label}</div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft);">
+          Semana: <strong style="color:var(--ink);">${weekAvg!=null?weekAvg.toFixed(1)+'%':'—'}</strong>
+          &nbsp;·&nbsp; Mes: <strong style="color:var(--ink);">${monthAvg!=null?monthAvg.toFixed(1)+'%':'—'}</strong>
+        </div>
+      </div>
+      ${buildOeeChartSvg(points)}
+    </div>`;
+  }).join('');
+}
+function buildOeeChartSvg(points){
+  const W=640, H=170, padL=38, padR=16, padT=16, padB=26;
+  const plotW = W-padL-padR, plotH = H-padT-padB;
+  const maxV = 100;
+  const stepX = points.length>1 ? plotW/(points.length-1) : 0;
+  const dayLabels = ['L','M','X','J','V','S','D'];
+  let dots='', labels='', pathPts=[];
+  points.forEach((p,i)=>{
+    const x = padL + i*stepX;
+    const isToday = p.date === state.date;
+    labels += `<text x="${x}" y="${H-8}" font-size="10" fill="${isToday?'var(--amber-deep)':'var(--ink-soft)'}" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="${isToday?'700':'400'}">${dayLabels[i]}</text>`;
+    if(p.oee!=null){
+      const y = padT + plotH - (Math.min(p.oee,100)/maxV)*plotH;
+      pathPts.push([x,y]);
+      dots += `<circle cx="${x}" cy="${y}" r="4" fill="var(--amber)" stroke="#fff" stroke-width="1.5"/>`;
+      dots += `<text x="${x}" y="${y-11}" font-size="10" text-anchor="middle" fill="var(--ink)" font-family="IBM Plex Mono, monospace">${p.oee.toFixed(0)}%</text>`;
+    }
+  });
+  let grid='';
+  [0,50,100].forEach(v=>{
+    const y = padT+plotH-(v/maxV)*plotH;
+    grid += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#E7EAED" stroke-width="1"/><text x="${padL-8}" y="${y+3}" font-size="9" text-anchor="end" fill="var(--ink-soft)" font-family="IBM Plex Mono, monospace">${v}%</text>`;
+  });
+  const linePath = pathPts.length>1 ? 'M'+pathPts.map(p=>p.join(',')).join(' L') : '';
+  const noData = points.every(p=>p.oee==null);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet">
+    ${grid}
+    ${linePath?`<path d="${linePath}" fill="none" stroke="var(--amber)" stroke-width="2.5"/>`:''}
+    ${dots}
+    ${labels}
+  </svg>${noData?'<p class="empty-note">Todavía no hay datos guardados esta semana para esta línea.</p>':''}`;
+}
+
+function openLightbox(src){
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('open');
+  document.getElementById('lightboxImg').src = '';
+}
+document.getElementById('lightboxClose').onclick = closeLightbox;
+document.getElementById('lightbox').onclick = (e)=>{ if(e.target.id==='lightbox') closeLightbox(); };
+
+function deptTemplate(dept){
+  const d = state.deptData[dept.id];
+  const overTarget = liveElapsed(d) > d.objetivo*60;
+  let fieldsHtml = '';
+  if(dept.fields.length){
+    fieldsHtml = `<div class="field-grid">` + dept.fields.map(f=>`
+      <div class="field">
+        <label>${f.label}</label>
+        <input type="${f.type}" data-fieldkey="${f.key}" value="${d.fields[f.key] ?? ''}">
+      </div>`).join('') + `</div>`;
+  }
+  const textSectionsHtml = (dept.textSections||[]).map(sec => `
+      <div class="field" style="margin-bottom:14px;">
+        <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:4px;">${sec.label}</label>
+        <textarea data-extrakey="${sec.key}" placeholder="Escribe aquí...">${(d.extra && d.extra[sec.key]) || ''}</textarea>
+      </div>`).join('');
+  const jarabesHtml = dept.id === 'produccion' ? `
+      <div class="media-block">
+        <h3>Jarabes</h3>
+        <textarea id="jarabesArea" placeholder="Comentarios de jarabes...">${d.jarabesNotes||''}</textarea>
+      </div>` : '';
+  const oeeHtml = dept.id === 'produccion' ? `
+      <div class="media-block">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <h3 style="margin:0;">Evolución OEE</h3>
+          <button class="btn btn-reset no-print" id="editWeekBtn" style="padding:6px 12px; font-size:12px;">Rellenar / corregir semana</button>
+        </div>
+        <div id="oeeEvolution-dept"><p class="empty-note">Cargando evolución...</p></div>
+      </div>` : '';
+
+  const photoSlotHtml = (slot) => {
+    const photo = (d.namedPhotos && d.namedPhotos[slot.key]) || null;
+    const photoWidget = photo
+      ? `<div class="photo-thumb">
+           <img src="${photo.dataUrl}" alt="${slot.label}" style="cursor:zoom-in;">
+           <button data-removeslotphoto="${slot.key}" title="Quitar foto">✕</button>
+         </div>`
+      : `<label class="add-photo-btn" for="slotphoto-${slot.key}">+ Foto<input type="file" data-slotphotoinput="${slot.key}" accept="image/*" style="display:none;"></label>`;
+    const pairedHtml = slot.pairedTextKey ? `
+      <div class="field" style="margin-top:8px; max-width:420px;">
+        <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:4px;">${slot.pairedTextLabel}</label>
+        <textarea data-extrakey="${slot.pairedTextKey}" style="min-height:70px;" placeholder="Escribe aquí...">${(d.extra && d.extra[slot.pairedTextKey]) || ''}</textarea>
+      </div>` : '';
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:6px;">${slot.label}</div>
+        <div class="photo-strip">${photoWidget}</div>
+        ${pairedHtml}
+      </div>`;
+  };
+  const photosBlockHtml = dept.photoSlots
+    ? `<div class="media-block">
+         <h3>Fotos</h3>
+         ${dept.photoSlots.map(photoSlotHtml).join('')}
+       </div>`
+    : `<div class="media-block">
+        <h3>Fotos y vídeo</h3>
+        <p class="media-hint">Fotos: máx. 2, se comprimen automáticamente. Para vídeo o varias fotos, sube el archivo a Teams/OneDrive y pega aquí el enlace.</p>
+        <div class="photo-strip" id="photoStrip">
+          ${(d.photos||[]).map((p,i)=>`
+            <div class="photo-thumb">
+              <img src="${p.dataUrl}" alt="Foto ${i+1}" style="cursor:zoom-in;">
+              <button data-removephoto="${i}" title="Quitar foto">✕</button>
+            </div>`).join('')}
+          ${(d.photos||[]).length < 2 ? `
+            <label class="add-photo-btn" for="photoInput">+ Foto<input type="file" id="photoInput" accept="image/*" style="display:none;"></label>
+          ` : ''}
+        </div>
+        <div class="field link-field">
+          <label>Enlace a vídeo / documento (Teams, OneDrive, SharePoint...)</label>
+          <input type="text" id="mediaLinkInput" placeholder="https://..." value="${d.mediaLink||''}">
+        </div>
+      </div>`;
+
+  return `
+    <div class="topline">
+      <div>
+        <div class="eyebrow">${prettyDate(state.date)}</div>
+        <h2>${dept.name}</h2>
+      </div>
+      <div class="save-state" id="saveState">—</div>
+    </div>
+
+    <div class="panel timer-block">
+      <div class="timer-display ${d.running?'running':''} ${overTarget?'over-target':''}">${fmt(liveElapsed(d))}</div>
+      <div class="timer-meta">
+        <div class="timer-row">
+          Objetivo:
+          <input type="number" class="objetivo-input" id="objetivoInput" value="${d.objetivo}" min="0" step="0.5"> min
+        </div>
+        <div class="checkline">
+          <input type="checkbox" id="puntualCheck" ${d.puntual?'checked':''}>
+          <label for="puntualCheck" style="margin:0;">Empezó puntual</label>
+        </div>
+      </div>
+      <div class="timer-buttons">
+        ${d.running
+          ? `<button class="btn btn-stop" id="stopBtn">Parar</button>`
+          : `<button class="btn btn-start" id="startBtn">Iniciar turno</button>`}
+        <button class="btn btn-reset" id="resetBtn">Reiniciar</button>
+      </div>
+    </div>
+
+    <div class="panel fields">
+      ${fieldsHtml}
+      ${textSectionsHtml}
+      <h3>${dept.notesLabel}</h3>
+      <textarea id="notesArea" placeholder="Escribe aquí...">${d.notes}</textarea>
+      ${jarabesHtml}
+      ${photosBlockHtml}
+      ${oeeHtml}
+    </div>
+  `;
+}
+function wireDeptEvents(dept){
+  const d = state.deptData[dept.id];
+  const startBtn = document.getElementById('startBtn');
+  const stopBtn = document.getElementById('stopBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  if(startBtn) startBtn.onclick = ()=>startTimer(dept.id);
+  if(stopBtn) stopBtn.onclick = ()=>stopTimer(dept.id);
+  if(resetBtn) resetBtn.onclick = ()=>{ if(confirm('¿Reiniciar el tiempo de '+dept.name+'?')) resetTimer(dept.id); };
+  if(d.running) ensureTicking();
+
+  document.getElementById('objetivoInput').oninput = (e)=>{
+    d.objetivo = parseFloat(e.target.value||0);
+    scheduleSave(dept.id);
+  };
+  document.getElementById('puntualCheck').onchange = (e)=>{
+    d.puntual = e.target.checked;
+    scheduleSave(dept.id);
+  };
+  document.getElementById('notesArea').oninput = (e)=>{
+    d.notes = e.target.value;
+    scheduleSave(dept.id);
+    document.querySelector('.navlist button.active')?.classList.add('filled');
+  };
+  const jarabesArea = document.getElementById('jarabesArea');
+  if(jarabesArea){
+    jarabesArea.oninput = (e)=>{
+      d.jarabesNotes = e.target.value;
+      scheduleSave(dept.id);
+    };
+  }
+  document.querySelectorAll('[data-fieldkey]').forEach(inp=>{
+    inp.oninput = (e)=>{
+      d.fields[e.target.dataset.fieldkey] = e.target.value;
+      scheduleSave(dept.id);
+    };
+  });
+
+  const photoInput = document.getElementById('photoInput');
+  if(photoInput){
+    photoInput.onchange = async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      try{
+        const dataUrl = await compressImage(file, 480, 0.45);
+        d.photos = d.photos || [];
+        d.photos.push({ dataUrl });
+        scheduleSave(dept.id);
+        render();
+      }catch(err){
+        alert('No se ha podido procesar la foto. Prueba con otra imagen o usa el campo de enlace.');
+      }
+    };
+  }
+  document.querySelectorAll('[data-removephoto]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const idx = parseInt(btn.dataset.removephoto,10);
+      d.photos.splice(idx,1);
+      scheduleSave(dept.id);
+      render();
+    };
+  });
+  document.querySelectorAll('[data-viewphoto]').forEach(img=>{
+    img.onclick = ()=> openLightbox(img.src);
+  });
+  document.querySelectorAll('.photo-thumb img').forEach(img=>{
+    if(!img.onclick) img.onclick = ()=> openLightbox(img.src);
+  });
+  document.querySelectorAll('[data-extrakey]').forEach(ta=>{
+    ta.oninput = (e)=>{
+      d.extra = d.extra || {};
+      d.extra[e.target.dataset.extrakey] = e.target.value;
+      scheduleSave(dept.id);
+    };
+  });
+  document.querySelectorAll('[data-slotphotoinput]').forEach(inp=>{
+    inp.onchange = async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const slotKey = inp.dataset.slotphotoinput;
+      try{
+        const dataUrl = await compressImage(file, 480, 0.45);
+        d.namedPhotos = d.namedPhotos || {};
+        d.namedPhotos[slotKey] = { dataUrl };
+        scheduleSave(dept.id);
+        render();
+      }catch(err){
+        alert('No se ha podido procesar la foto. Prueba con otra imagen.');
+      }
+    };
+  });
+  document.querySelectorAll('[data-removeslotphoto]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const slotKey = btn.dataset.removeslotphoto;
+      if(d.namedPhotos) delete d.namedPhotos[slotKey];
+      scheduleSave(dept.id);
+      render();
+    };
+  });
+  const mediaLinkInput = document.getElementById('mediaLinkInput');
+  if(mediaLinkInput){
+    mediaLinkInput.oninput = (e)=>{
+      d.mediaLink = e.target.value;
+      scheduleSave(dept.id);
+    };
+  }
+
+  if(dept.id === 'produccion'){
+    renderOeeCharts('oeeEvolution-dept');
+    const editWeekBtn = document.getElementById('editWeekBtn');
+    if(editWeekBtn) editWeekBtn.onclick = openWeekEditor;
+  }
+}
+
+/* ---- editor rápido de la semana de OEE ---- */
+async function openWeekEditor(){
+  const weekDates = getWeekDates(state.date);
+  const dayLabels = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  const rows = await Promise.all(weekDates.map(async (date, i)=>{
+    const dd = (date === state.date) ? state.deptData.produccion : await loadDeptDay(date, 'produccion');
+    return {
+      date, label: dayLabels[i],
+      l29: (dd.fields && dd.fields.oee_l29 != null) ? dd.fields.oee_l29 : '',
+      l28: (dd.fields && dd.fields.oee_l28 != null) ? dd.fields.oee_l28 : ''
+    };
+  }));
+  document.getElementById('weekEditorBox').innerHTML = weekEditorTemplate(rows);
+  document.getElementById('weekEditorOverlay').classList.add('open');
+  document.getElementById('weekEditorClose').onclick = closeWeekEditor;
+  document.getElementById('weekEditorCancel').onclick = closeWeekEditor;
+  document.getElementById('weekEditorSave').onclick = ()=> saveWeekEditor(weekDates);
+}
+function weekEditorTemplate(rows){
+  return `
+    <div class="modal-head">
+      <h3>OEE de la semana</h3>
+      <button class="modal-close" id="weekEditorClose">✕</button>
+    </div>
+    <p class="empty-note" style="margin:-6px 0 12px;">Rellena o corrige el % de cada línea, día a día. Se guarda directamente en cada día.</p>
+    <table>
+      <thead><tr><th>Día</th><th>Línea 29</th><th>Línea 28</th></tr></thead>
+      <tbody>
+        ${rows.map((r,i)=>`
+          <tr>
+            <td class="day-cell">${r.label}<span>${r.date}</span></td>
+            <td><input type="number" step="0.1" data-weekrow="${i}" data-line="l29" value="${r.l29}"></td>
+            <td><input type="number" step="0.1" data-weekrow="${i}" data-line="l28" value="${r.l28}"></td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+      <button class="btn btn-reset" id="weekEditorCancel">Cancelar</button>
+      <button class="btn btn-start" id="weekEditorSave">Guardar semana</button>
+    </div>
+  `;
+}
+function closeWeekEditor(){
+  document.getElementById('weekEditorOverlay').classList.remove('open');
+}
+async function saveWeekEditor(weekDates){
+  const saveBtn = document.getElementById('weekEditorSave');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Guardando…';
+  for(let i=0;i<weekDates.length;i++){
+    const date = weekDates[i];
+    const l29input = document.querySelector(`[data-weekrow="${i}"][data-line="l29"]`);
+    const l28input = document.querySelector(`[data-weekrow="${i}"][data-line="l28"]`);
+    const l29 = l29input.value;
+    const l28 = l28input.value;
+    // Si el día es el que se está editando ahora mismo, se actualiza en memoria + guardado normal.
+    if(date === state.date){
+      state.deptData.produccion.fields.oee_l29 = l29;
+      state.deptData.produccion.fields.oee_l28 = l28;
+      scheduleSave('produccion');
+      continue;
+    }
+    const dd = await loadDeptDay(date, 'produccion');
+    dd.fields = dd.fields || {};
+    dd.fields.oee_l29 = l29;
+    dd.fields.oee_l28 = l28;
+    try{
+      await storageSet(keyFor(date,'produccion'), JSON.stringify(dd), true);
+      await recordDayIndex(date);
+    }catch(e){
+      alert('No se ha podido guardar el día '+date+'.');
+    }
+  }
+  closeWeekEditor();
+  render();
+}
+
+function compressImage(file, maxDim, quality){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=>reject(new Error('read error'));
+    reader.onload = ()=>{
+      const img = new Image();
+      img.onerror = ()=>reject(new Error('image error'));
+      img.onload = ()=>{
+        let { width, height } = img;
+        if(width > height && width > maxDim){
+          height = Math.round(height * (maxDim/width)); width = maxDim;
+        } else if(height > maxDim){
+          width = Math.round(width * (maxDim/height)); height = maxDim;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function prettyDate(iso){
+  const [y,m,dd] = iso.split('-');
+  const dt = new Date(Number(y), Number(m)-1, Number(dd));
+  return dt.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+
+/* ---------------- INIT / DATE CHANGE ---------------- */
+async function switchDay(date){
+  await flushPendingSaves();
+  state.date = date;
+  document.getElementById('main').innerHTML = `<div class="panel"><p class="empty-note">Cargando datos del día…</p></div>`;
+  try{
+    state.deptData = await loadDay(date);
+    render();
+  }catch(e){
+    console.error('Fallo cargando el día', date, e);
+    document.getElementById('main').innerHTML = `<div class="panel"><p class="empty-note">No se ha podido cargar este día (${e && e.message ? e.message : e}). <a href="#" id="retryLoad">Reintentar</a></p></div>`;
+    const retry = document.getElementById('retryLoad');
+    if(retry) retry.onclick = (ev)=>{ ev.preventDefault(); switchDay(date); };
+  }
+}
+async function init(){
+  const picker = document.getElementById('datePick');
+  picker.value = todayISO();
+  picker.onchange = (e)=> switchDay(e.target.value);
+  window.addEventListener('beforeunload', ()=>{ flushPendingSaves(); });
+  renderNav();
+  await switchDay(todayISO());
+}
+init();
+</script>
+</body>
+</html>
