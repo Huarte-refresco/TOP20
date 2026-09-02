@@ -467,28 +467,42 @@
 <script>
 /* ---------------- CONFIG ---------------- */
 const DEPARTMENTS = [
-  { id:'ehs', name:'EHS', person:'Claudia Naturana', fields:[
+  { id:'ehs', name:'EHS', fields:[
       {key:'accidentes', label:'Accidentes', type:'number'},
       {key:'incidentes', label:'Incidentes', type:'number'},
       {key:'recordables', label:'Recordables', type:'number'},
     ], notesLabel:'Comentarios' },
-  { id:'rrhh', name:'RRHH', person:'Mª Ángeles Marín', fields:[
+  { id:'rrhh', name:'RRHH', fields:[
       {key:'bajas', label:'Bajas', type:'number'},
       {key:'ett', label:'ETT', type:'number'},
     ], notesLabel:'Comentarios' },
-  { id:'control', name:'Control', person:'Raquel Lezaun', fields:[], notesLabel:'Comentarios' },
-  { id:'logistica', name:'Logística', person:'Javier Hualde', fields:[], notesLabel:'Plan de llenado / Comentarios' },
-  { id:'calidad', name:'Calidad', person:'Nuria Murugarren', fields:[
+  { id:'control', name:'Control', fields:[], notesLabel:'Comentarios' },
+  { id:'logistica', name:'Logística', fields:[], notesLabel:'Comentarios generales',
+    photoSlots:[
+      {key:'planSemanal', label:'Planificación semanal'},
+      {key:'l8', label:'Prodplan L8', pairedTextKey:'comentariosL8', pairedTextLabel:'Comentarios L8'},
+      {key:'l9', label:'Prodplan L9', pairedTextKey:'comentariosL9', pairedTextLabel:'Comentarios L9'},
+    ]
+  },
+  { id:'calidad', name:'Calidad', fields:[
       {key:'ftr', label:'FTR %', type:'text'},
-      {key:'reclamaciones', label:'Reclamaciones', type:'number'},
-    ], notesLabel:'Incidencias' },
-  { id:'produccion', name:'Producción', person:'J.G. / S.P. / J.F.', fields:[
+    ], notesLabel:'Incidencias',
+    textSections:[
+      {key:'reclamaciones', label:'Reclamaciones'},
+    ]
+  },
+  { id:'produccion', name:'Producción', fields:[
       {key:'oee_l29', label:'OEE Línea 29', type:'number'},
       {key:'oee_l28', label:'OEE Línea 28', type:'number'},
-    ], notesLabel:'Incidencias' },
-  { id:'mto', name:'Mantenimiento', person:'Francisco Fernández', fields:[], notesLabel:'Incidencias' },
-  { id:'pex', name:'PEX', person:'Jesús Falces', fields:[], notesLabel:'Incidencias' },
-  { id:'jefeplanta', name:'Jefe de Planta', person:'Alberto Ataun', fields:[], notesLabel:'Cierre / Acciones' },
+    ], notesLabel:'Incidencias',
+    textSections:[
+      {key:'comentariosL29', label:'Comentarios Línea 29'},
+      {key:'comentariosL28', label:'Comentarios Línea 28'},
+    ]
+  },
+  { id:'mto', name:'Mantenimiento', fields:[], notesLabel:'Incidencias' },
+  { id:'pex', name:'PEX', fields:[], notesLabel:'Incidencias' },
+  { id:'jefeplanta', name:'Jefe de Planta', fields:[], notesLabel:'Cierre / Acciones' },
 ];
 const OEE_LINES = [
   { key:'oee_l29', label:'OEE Línea 29' },
@@ -548,14 +562,16 @@ function blankDeptData(){
     notes: '',
     jarabesNotes: '',
     fields: {},
+    extra: {},
     photos: [],
+    namedPhotos: {},
     mediaLink: ''
   };
 }
 async function loadDeptDay(date, deptId){
   try{
     const res = await storageGet(keyFor(date, deptId));
-    if(res) return JSON.parse(res.value);
+    if(res) return Object.assign(blankDeptData(), JSON.parse(res.value));
   }catch(e){ console.error('loadDeptDay', deptId, date, e); }
   return blankDeptData();
 }
@@ -723,7 +739,7 @@ function makeNavButton(dept, isResumen){
   const d = state.deptData[dept.id];
   const filled = !isResumen && d && (d.notes.trim() || d.elapsedSec>0 || Object.values(d.fields||{}).some(v=>v));
   btn.className = 'nav-btn' + (state.active===dept.id ? ' active':'') + (filled ? ' filled':'');
-  btn.innerHTML = `<span class="dot"></span><span><span class="dept-name">${dept.name}</span>${dept.person ? `<span class="dept-person">${dept.person}</span>`:''}</span>`;
+  btn.innerHTML = `<span class="dot"></span><span class="dept-name">${dept.name}</span>`;
   btn.onclick = ()=>{ state.active = dept.id; render(); };
   li.appendChild(btn);
   return li;
@@ -832,21 +848,32 @@ function informeTemplate(){
     const over = real > d.objetivo*60;
     const fieldsHtml = dept.fields.length ? `<div class="informe-kv">${dept.fields.map(f=>`
         <div><span>${f.label}</span>${d.fields[f.key] ?? '—'}</div>`).join('')}</div>` : '';
-    const photosHtml = (d.photos||[]).length ? `<div class="informe-photos">${d.photos.map((p,i)=>`
+    const textSectionsHtml = (dept.textSections||[]).map(sec=>`
+        <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">${sec.label}</h5>
+        <div class="informe-notes">${escapeHtml((d.extra && d.extra[sec.key]) || '')}</div>`).join('');
+    const namedPhotosHtml = dept.photoSlots ? dept.photoSlots.map(slot=>{
+      const photo = (d.namedPhotos && d.namedPhotos[slot.key]) || null;
+      const pairedText = slot.pairedTextKey ? (d.extra && d.extra[slot.pairedTextKey]) || '' : '';
+      return `
+        <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">${slot.label}</h5>
+        ${photo ? `<div class="informe-photos"><img src="${photo.dataUrl}" data-lightbox="1" alt="${slot.label}"></div>` : `<p class="empty-note">Sin foto.</p>`}
+        ${slot.pairedTextKey ? `<div class="informe-notes">${escapeHtml(pairedText)}</div>` : ''}
+      `;
+    }).join('') : '';
+    const photosHtml = (!dept.photoSlots && (d.photos||[]).length) ? `<div class="informe-photos">${d.photos.map((p,i)=>`
         <img src="${p.dataUrl}" data-lightbox="1" alt="${dept.name} foto ${i+1}">`).join('')}</div>` : '';
     const linkHtml = d.mediaLink ? `<div class="informe-link">🔗 <a href="${d.mediaLink}" target="_blank" rel="noopener">${d.mediaLink}</a></div>` : '';
     const jarabesInformeHtml = dept.id === 'produccion' ? `
         <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">Jarabes</h5>
         <div class="informe-notes">${escapeHtml(d.jarabesNotes||'')}</div>` : '';
     const oeeInformeHtml = dept.id === 'produccion' ? `
-        <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:12px 0 4px;">Evolución semanal OEE</h5>
+        <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:12px 0 4px;">Evolución OEE</h5>
         <div id="oeeEvolution-informe"><p class="empty-note">Cargando evolución...</p></div>` : '';
     return `
       <div class="informe-dept">
         <div class="informe-dept-head">
           <div>
             <h4>${dept.name}</h4>
-            <div class="person">${dept.person||''}</div>
           </div>
           <div class="informe-time-wrap">
             <div class="informe-time ${over?'over':''}" data-timerfor="${dept.id}">${fmt(real)}</div>
@@ -855,8 +882,10 @@ function informeTemplate(){
           </div>
         </div>
         ${fieldsHtml}
+        ${textSectionsHtml}
         <div class="informe-notes">${escapeHtml(d.notes||'')}</div>
         ${jarabesInformeHtml}
+        ${namedPhotosHtml}
         ${photosHtml}
         ${linkHtml}
         ${oeeInformeHtml}
@@ -917,7 +946,7 @@ function renderKpiStripOnly(){
   `;
 }
 
-/* ---- evolución semanal OEE (2 líneas) ---- */
+/* ---- evolución OEE (2 líneas) con medias semanal y mensual ---- */
 function getWeekDates(isoDateStr){
   const [y,m,dd] = isoDateStr.split('-').map(Number);
   const d = new Date(y, m-1, dd);
@@ -931,27 +960,61 @@ function getWeekDates(isoDateStr){
   }
   return dates;
 }
+function getMonthWeekdayDates(isoDateStr){
+  const [y,m,dd] = isoDateStr.split('-').map(Number);
+  const today = new Date(y, m-1, dd);
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const dates = [];
+  for(let day=1; day<=daysInMonth; day++){
+    const dt = new Date(y, m-1, day);
+    if(dt > today) continue;               // día futuro, no cuenta
+    const dow = dt.getDay();
+    if(dow===0 || dow===6) continue;        // fin de semana, no cuenta
+    dates.push(localISO(dt));
+  }
+  return dates;
+}
+function average(values){
+  const clean = values.filter(v=>v!=null && !isNaN(v));
+  if(!clean.length) return null;
+  return clean.reduce((a,b)=>a+b,0)/clean.length;
+}
 async function renderOeeCharts(containerId){
   const container = document.getElementById(containerId);
   if(!container) return;
   const weekDates = getWeekDates(state.date);
+  const monthDates = getMonthWeekdayDates(state.date);
+  const neededDates = Array.from(new Set([...weekDates, ...monthDates]));
   const dayCache = {};
-  for(const date of weekDates){
+  await Promise.all(neededDates.map(async date=>{
     dayCache[date] = (date === state.date) ? state.deptData.produccion : await loadDeptDay(date, 'produccion');
-  }
+  }));
+  const valueFor = (date, lineKey)=>{
+    const dd = dayCache[date];
+    const raw = dd && dd.fields ? dd.fields[lineKey] : null;
+    if(raw === null || raw === undefined || raw === '') return null;
+    const parsed = parseFloat(raw);
+    return isNaN(parsed) ? null : parsed;
+  };
   container.innerHTML = OEE_LINES.map(line=>{
-    const points = weekDates.map(date=>{
-      const dd = dayCache[date];
-      const raw = dd && dd.fields ? dd.fields[line.key] : null;
-      let v = null;
-      if(raw !== null && raw !== undefined && raw !== ''){
-        const parsed = parseFloat(raw);
-        if(!isNaN(parsed)) v = parsed;
-      }
-      return { date, oee: v };
-    });
+    const points = weekDates.map(date=>({ date, oee: valueFor(date, line.key) }));
+    // media semanal: solo días L-V, sin contar futuros ni vacíos
+    const today = new Date(state.date+'T00:00:00');
+    const weekAvgVals = weekDates.filter(date=>{
+      const dt = new Date(date+'T00:00:00');
+      const dow = dt.getDay();
+      return dow!==0 && dow!==6 && dt<=today;
+    }).map(date=> valueFor(date, line.key));
+    const weekAvg = average(weekAvgVals);
+    const monthAvg = average(monthDates.map(date=> valueFor(date, line.key)));
     return `<div class="oee-chart-block">
-      <div class="oee-chart-title">${line.label}</div>
+      <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px;">
+        <div class="oee-chart-title">${line.label}</div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft);">
+          Semana: <strong style="color:var(--ink);">${weekAvg!=null?weekAvg.toFixed(1)+'%':'—'}</strong>
+          &nbsp;·&nbsp; Mes: <strong style="color:var(--ink);">${monthAvg!=null?monthAvg.toFixed(1)+'%':'—'}</strong>
+        </div>
+      </div>
       ${buildOeeChartSvg(points)}
     </div>`;
   }).join('');
@@ -1011,6 +1074,11 @@ function deptTemplate(dept){
         <input type="${f.type}" data-fieldkey="${f.key}" value="${d.fields[f.key] ?? ''}">
       </div>`).join('') + `</div>`;
   }
+  const textSectionsHtml = (dept.textSections||[]).map(sec => `
+      <div class="field" style="margin-bottom:14px;">
+        <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:4px;">${sec.label}</label>
+        <textarea data-extrakey="${sec.key}" placeholder="Escribe aquí...">${(d.extra && d.extra[sec.key]) || ''}</textarea>
+      </div>`).join('');
   const jarabesHtml = dept.id === 'produccion' ? `
       <div class="media-block">
         <h3>Jarabes</h3>
@@ -1019,15 +1087,60 @@ function deptTemplate(dept){
   const oeeHtml = dept.id === 'produccion' ? `
       <div class="media-block">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <h3 style="margin:0;">Evolución semanal OEE</h3>
+          <h3 style="margin:0;">Evolución OEE</h3>
           <button class="btn btn-reset no-print" id="editWeekBtn" style="padding:6px 12px; font-size:12px;">Rellenar / corregir semana</button>
         </div>
         <div id="oeeEvolution-dept"><p class="empty-note">Cargando evolución...</p></div>
       </div>` : '';
+
+  const photoSlotHtml = (slot) => {
+    const photo = (d.namedPhotos && d.namedPhotos[slot.key]) || null;
+    const photoWidget = photo
+      ? `<div class="photo-thumb">
+           <img src="${photo.dataUrl}" alt="${slot.label}" style="cursor:zoom-in;">
+           <button data-removeslotphoto="${slot.key}" title="Quitar foto">✕</button>
+         </div>`
+      : `<label class="add-photo-btn" for="slotphoto-${slot.key}">+ Foto<input type="file" data-slotphotoinput="${slot.key}" accept="image/*" style="display:none;"></label>`;
+    const pairedHtml = slot.pairedTextKey ? `
+      <div class="field" style="margin-top:8px; max-width:420px;">
+        <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:4px;">${slot.pairedTextLabel}</label>
+        <textarea data-extrakey="${slot.pairedTextKey}" style="min-height:70px;" placeholder="Escribe aquí...">${(d.extra && d.extra[slot.pairedTextKey]) || ''}</textarea>
+      </div>` : '';
+    return `
+      <div style="margin-bottom:18px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:6px;">${slot.label}</div>
+        <div class="photo-strip">${photoWidget}</div>
+        ${pairedHtml}
+      </div>`;
+  };
+  const photosBlockHtml = dept.photoSlots
+    ? `<div class="media-block">
+         <h3>Fotos</h3>
+         ${dept.photoSlots.map(photoSlotHtml).join('')}
+       </div>`
+    : `<div class="media-block">
+        <h3>Fotos y vídeo</h3>
+        <p class="media-hint">Fotos: máx. 2, se comprimen automáticamente. Para vídeo o varias fotos, sube el archivo a Teams/OneDrive y pega aquí el enlace.</p>
+        <div class="photo-strip" id="photoStrip">
+          ${(d.photos||[]).map((p,i)=>`
+            <div class="photo-thumb">
+              <img src="${p.dataUrl}" alt="Foto ${i+1}" style="cursor:zoom-in;">
+              <button data-removephoto="${i}" title="Quitar foto">✕</button>
+            </div>`).join('')}
+          ${(d.photos||[]).length < 2 ? `
+            <label class="add-photo-btn" for="photoInput">+ Foto<input type="file" id="photoInput" accept="image/*" style="display:none;"></label>
+          ` : ''}
+        </div>
+        <div class="field link-field">
+          <label>Enlace a vídeo / documento (Teams, OneDrive, SharePoint...)</label>
+          <input type="text" id="mediaLinkInput" placeholder="https://..." value="${d.mediaLink||''}">
+        </div>
+      </div>`;
+
   return `
     <div class="topline">
       <div>
-        <div class="eyebrow">${prettyDate(state.date)} · ${dept.person||''}</div>
+        <div class="eyebrow">${prettyDate(state.date)}</div>
         <h2>${dept.name}</h2>
       </div>
       <div class="save-state" id="saveState">—</div>
@@ -1055,28 +1168,11 @@ function deptTemplate(dept){
 
     <div class="panel fields">
       ${fieldsHtml}
+      ${textSectionsHtml}
       <h3>${dept.notesLabel}</h3>
       <textarea id="notesArea" placeholder="Escribe aquí...">${d.notes}</textarea>
       ${jarabesHtml}
-
-      <div class="media-block">
-        <h3>Fotos y vídeo</h3>
-        <p class="media-hint">Fotos: máx. 2, se comprimen automáticamente. Para vídeo o varias fotos, sube el archivo a Teams/OneDrive y pega aquí el enlace.</p>
-        <div class="photo-strip" id="photoStrip">
-          ${(d.photos||[]).map((p,i)=>`
-            <div class="photo-thumb">
-              <img src="${p.dataUrl}" alt="Foto ${i+1}" data-viewphoto="${i}" style="cursor:zoom-in;">
-              <button data-removephoto="${i}" title="Quitar foto">✕</button>
-            </div>`).join('')}
-          ${(d.photos||[]).length < 2 ? `
-            <label class="add-photo-btn" for="photoInput">+ Foto<input type="file" id="photoInput" accept="image/*" style="display:none;"></label>
-          ` : ''}
-        </div>
-        <div class="field link-field">
-          <label>Enlace a vídeo / documento (Teams, OneDrive, SharePoint...)</label>
-          <input type="text" id="mediaLinkInput" placeholder="https://..." value="${d.mediaLink||''}">
-        </div>
-      </div>
+      ${photosBlockHtml}
       ${oeeHtml}
     </div>
   `;
@@ -1144,6 +1240,40 @@ function wireDeptEvents(dept){
   });
   document.querySelectorAll('[data-viewphoto]').forEach(img=>{
     img.onclick = ()=> openLightbox(img.src);
+  });
+  document.querySelectorAll('.photo-thumb img').forEach(img=>{
+    if(!img.onclick) img.onclick = ()=> openLightbox(img.src);
+  });
+  document.querySelectorAll('[data-extrakey]').forEach(ta=>{
+    ta.oninput = (e)=>{
+      d.extra = d.extra || {};
+      d.extra[e.target.dataset.extrakey] = e.target.value;
+      scheduleSave(dept.id);
+    };
+  });
+  document.querySelectorAll('[data-slotphotoinput]').forEach(inp=>{
+    inp.onchange = async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const slotKey = inp.dataset.slotphotoinput;
+      try{
+        const dataUrl = await compressImage(file, 480, 0.45);
+        d.namedPhotos = d.namedPhotos || {};
+        d.namedPhotos[slotKey] = { dataUrl };
+        scheduleSave(dept.id);
+        render();
+      }catch(err){
+        alert('No se ha podido procesar la foto. Prueba con otra imagen.');
+      }
+    };
+  });
+  document.querySelectorAll('[data-removeslotphoto]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const slotKey = btn.dataset.removeslotphoto;
+      if(d.namedPhotos) delete d.namedPhotos[slotKey];
+      scheduleSave(dept.id);
+      render();
+    };
   });
   const mediaLinkInput = document.getElementById('mediaLinkInput');
   if(mediaLinkInput){
