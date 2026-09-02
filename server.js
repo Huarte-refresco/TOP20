@@ -1,19 +1,22 @@
 const express = require('express');
 const path = require('path');
-const Database = require('better-sqlite3');
+const fs = require('fs');
 
 const PORT = process.env.PORT || 3000;
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data.sqlite');
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data.json');
 const PLANT_PASSWORD = process.env.PLANT_PASSWORD || 'marcilla2026';
 
-const db = new Database(DB_PATH);
-db.exec(`
-  CREATE TABLE IF NOT EXISTS kv (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL,
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-  );
-`);
+function loadDB() {
+  try {
+    return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+  } catch (e) {
+    return {};
+  }
+}
+function saveDB(db) {
+  fs.writeFileSync(DB_PATH, JSON.stringify(db));
+}
+let db = loadDB();
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -34,28 +37,23 @@ function checkAuth(req, res, next) {
 app.use(checkAuth);
 
 // --- API clave-valor ---
-const getStmt = db.prepare('SELECT value FROM kv WHERE key = ?');
-const setStmt = db.prepare(`
-  INSERT INTO kv (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)
-  ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
-`);
-const delStmt = db.prepare('DELETE FROM kv WHERE key = ?');
-
 app.get('/api/kv/:key', (req, res) => {
-  const row = getStmt.get(req.params.key);
-  if (!row) return res.status(404).json({ error: 'not_found' });
-  res.json({ key: req.params.key, value: row.value });
+  const value = db[req.params.key];
+  if (value === undefined) return res.status(404).json({ error: 'not_found' });
+  res.json({ key: req.params.key, value });
 });
 
 app.put('/api/kv/:key', (req, res) => {
   const { value } = req.body || {};
   if (typeof value !== 'string') return res.status(400).json({ error: 'value_must_be_string' });
-  setStmt.run(req.params.key, value);
+  db[req.params.key] = value;
+  saveDB(db);
   res.json({ ok: true });
 });
 
 app.delete('/api/kv/:key', (req, res) => {
-  delStmt.run(req.params.key);
+  delete db[req.params.key];
+  saveDB(db);
   res.json({ ok: true });
 });
 
