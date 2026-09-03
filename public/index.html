@@ -476,7 +476,7 @@ const DEPARTMENTS = [
       {key:'bajas', label:'Bajas', type:'number'},
       {key:'ett', label:'ETT', type:'number'},
     ], notesLabel:'Comentarios' },
-  { id:'controlling', name:'Controlling', fields:[], notesLabel:'Comentarios' },
+  { id:'control', name:'Control', fields:[], notesLabel:'Comentarios' },
   { id:'logistica', name:'Logística', fields:[], notesLabel:'Comentarios generales',
     noGenericPhotos: true,
     photoSlots:[
@@ -489,9 +489,10 @@ const DEPARTMENTS = [
     textSections:[
       {key:'reclamaciones', label:'Reclamaciones'},
     ],
-  maxPhotos: 6,
-    photosLabel: 'FTR',
-   
+    photoSlots:[
+      {key:'ftr', label:'FTR', multi:true, max:8},
+    ],
+    slotsAtTop: true,
     maxPhotos: 6,
     photosLabel: 'Evidencias'
   },
@@ -856,11 +857,22 @@ function informeTemplate(){
         <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">${sec.label}</h5>
         <div class="informe-notes">${escapeHtml((d.extra && d.extra[sec.key]) || '')}</div>`).join('');
     const namedPhotosHtml = dept.photoSlots ? dept.photoSlots.map(slot=>{
-      const photo = (d.namedPhotos && d.namedPhotos[slot.key]) || null;
       const pairedText = slot.pairedTextKey ? (d.extra && d.extra[slot.pairedTextKey]) || '' : '';
+      let photosMarkup;
+      if(slot.multi){
+        const arr = (d.namedPhotos && Array.isArray(d.namedPhotos[slot.key])) ? d.namedPhotos[slot.key] : [];
+        photosMarkup = arr.length
+          ? `<div class="informe-photos">${arr.map((p,i)=>`<img src="${p.dataUrl}" data-lightbox="1" alt="${slot.label} ${i+1}">`).join('')}</div>`
+          : `<p class="empty-note">Sin foto.</p>`;
+      } else {
+        const photo = (d.namedPhotos && d.namedPhotos[slot.key] && !Array.isArray(d.namedPhotos[slot.key])) ? d.namedPhotos[slot.key] : null;
+        photosMarkup = photo
+          ? `<div class="informe-photos"><img src="${photo.dataUrl}" data-lightbox="1" alt="${slot.label}"></div>`
+          : `<p class="empty-note">Sin foto.</p>`;
+      }
       return `
         <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">${slot.label}</h5>
-        ${photo ? `<div class="informe-photos"><img src="${photo.dataUrl}" data-lightbox="1" alt="${slot.label}"></div>` : `<p class="empty-note">Sin foto.</p>`}
+        ${photosMarkup}
         ${slot.pairedTextKey ? `<div class="informe-notes">${escapeHtml(pairedText)}</div>` : ''}
       `;
     }).join('') : '';
@@ -1100,13 +1112,27 @@ function deptTemplate(dept){
       </div>` : '';
 
   const photoSlotHtml = (slot) => {
-    const photo = (d.namedPhotos && d.namedPhotos[slot.key]) || null;
-    const photoWidget = photo
-      ? `<div class="photo-thumb">
-           <img src="${photo.dataUrl}" alt="${slot.label}" style="cursor:zoom-in;">
-           <button data-removeslotphoto="${slot.key}" title="Quitar foto">✕</button>
-         </div>`
-      : `<label class="add-photo-btn" for="slotphoto-${slot.key}">+ Foto<input type="file" id="slotphoto-${slot.key}" data-slotphotoinput="${slot.key}" accept="image/*" style="display:none;"></label>`;
+    let photoWidget;
+    if(slot.multi){
+      const arr = (d.namedPhotos && Array.isArray(d.namedPhotos[slot.key])) ? d.namedPhotos[slot.key] : [];
+      const maxN = slot.max || 6;
+      photoWidget = `<div class="photo-strip">
+        ${arr.map((p,i)=>`
+          <div class="photo-thumb">
+            <img src="${p.dataUrl}" alt="${slot.label} ${i+1}" style="cursor:zoom-in;">
+            <button data-removemultislotphoto="${slot.key}:${i}" title="Quitar foto">✕</button>
+          </div>`).join('')}
+        ${arr.length < maxN ? `<label class="add-photo-btn" for="slotphoto-${slot.key}">+ Foto<input type="file" id="slotphoto-${slot.key}" data-multislotphotoinput="${slot.key}" accept="image/*" style="display:none;"></label>` : ''}
+      </div>`;
+    } else {
+      const photo = (d.namedPhotos && d.namedPhotos[slot.key] && !Array.isArray(d.namedPhotos[slot.key])) ? d.namedPhotos[slot.key] : null;
+      photoWidget = photo
+        ? `<div class="photo-strip"><div class="photo-thumb">
+             <img src="${photo.dataUrl}" alt="${slot.label}" style="cursor:zoom-in;">
+             <button data-removeslotphoto="${slot.key}" title="Quitar foto">✕</button>
+           </div></div>`
+        : `<div class="photo-strip"><label class="add-photo-btn" for="slotphoto-${slot.key}">+ Foto<input type="file" id="slotphoto-${slot.key}" data-slotphotoinput="${slot.key}" accept="image/*" style="display:none;"></label></div>`;
+    }
     const pairedHtml = slot.pairedTextKey ? `
       <div class="field" style="margin-top:8px; max-width:420px;">
         <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:4px;">${slot.pairedTextLabel}</label>
@@ -1115,7 +1141,7 @@ function deptTemplate(dept){
     return `
       <div style="margin-bottom:18px;">
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:6px;">${slot.label}</div>
-        <div class="photo-strip">${photoWidget}</div>
+        ${photoWidget}
         ${pairedHtml}
       </div>`;
   };
@@ -1135,12 +1161,25 @@ function deptTemplate(dept){
             ` : ''}
           </div>
         </div>`;
+  const topSlotsHtml = (dept.photoSlots && dept.slotsAtTop) ? `
+      <div class="panel fields" style="margin-bottom:18px;">
+        ${namedSlotsHtml}
+      </div>` : '';
   const photosBlockHtml = `
       <div class="media-block">
-        <h3>${dept.photoSlots ? 'Fotos' : (dept.photosLabel || 'Fotos y vídeo')}</h3>
+        ${(!dept.slotsAtTop) ? `<h3>${dept.photoSlots ? 'Fotos' : (dept.photosLabel || 'Fotos y vídeo')}</h3>` : (!dept.noGenericPhotos ? `<h3>${dept.photosLabel || 'Fotos y vídeo'}</h3>` : '')}
         ${!dept.photoSlots ? `<p class="media-hint">Fotos: máx. ${maxPhotos}, se comprimen automáticamente. Para vídeo o más fotos, sube el archivo a Teams/OneDrive y pega aquí el enlace.</p>` : ''}
-        ${namedSlotsHtml}
-        ${genericGalleryHtml}
+        ${dept.slotsAtTop ? '' : namedSlotsHtml}
+        ${dept.slotsAtTop ? (dept.noGenericPhotos ? '' : `<div class="photo-strip" id="photoStrip">
+            ${(d.photos||[]).map((p,i)=>`
+              <div class="photo-thumb">
+                <img src="${p.dataUrl}" alt="Foto ${i+1}" style="cursor:zoom-in;">
+                <button data-removephoto="${i}" title="Quitar foto">✕</button>
+              </div>`).join('')}
+            ${(d.photos||[]).length < maxPhotos ? `
+              <label class="add-photo-btn" for="photoInput">+ Foto<input type="file" id="photoInput" accept="image/*" style="display:none;"></label>
+            ` : ''}
+          </div>`) : genericGalleryHtml}
         <div class="field link-field" style="margin-top:14px;">
           <label>Enlace a vídeo / documento (Teams, OneDrive, SharePoint...)</label>
           <input type="text" id="mediaLinkInput" placeholder="https://..." value="${d.mediaLink||''}">
@@ -1175,7 +1214,7 @@ function deptTemplate(dept){
         <button class="btn btn-reset" id="resetBtn">Reiniciar</button>
       </div>
     </div>
-
+    ${topSlotsHtml}
     <div class="panel fields">
       ${fieldsHtml}
       ${textSectionsHtml}
@@ -1281,6 +1320,32 @@ function wireDeptEvents(dept){
     btn.onclick = ()=>{
       const slotKey = btn.dataset.removeslotphoto;
       if(d.namedPhotos) delete d.namedPhotos[slotKey];
+      scheduleSave(dept.id);
+      render();
+    };
+  });
+  document.querySelectorAll('[data-multislotphotoinput]').forEach(inp=>{
+    inp.onchange = async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const slotKey = inp.dataset.multislotphotoinput;
+      try{
+        const dataUrl = await compressImage(file, 480, 0.45);
+        d.namedPhotos = d.namedPhotos || {};
+        if(!Array.isArray(d.namedPhotos[slotKey])) d.namedPhotos[slotKey] = [];
+        d.namedPhotos[slotKey].push({ dataUrl });
+        scheduleSave(dept.id);
+        render();
+      }catch(err){
+        alert('No se ha podido procesar la foto. Prueba con otra imagen.');
+      }
+    };
+  });
+  document.querySelectorAll('[data-removemultislotphoto]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const [slotKey, idxStr] = btn.dataset.removemultislotphoto.split(':');
+      const idx = parseInt(idxStr, 10);
+      if(d.namedPhotos && Array.isArray(d.namedPhotos[slotKey])) d.namedPhotos[slotKey].splice(idx,1);
       scheduleSave(dept.id);
       render();
     };
