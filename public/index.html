@@ -1100,7 +1100,7 @@ function deptTemplate(dept){
            <img src="${photo.dataUrl}" alt="${slot.label}" style="cursor:zoom-in;">
            <button data-removeslotphoto="${slot.key}" title="Quitar foto">✕</button>
          </div>`
-      : `<label class="add-photo-btn" for="slotphoto-${slot.key}">+ Foto<input type="file" data-slotphotoinput="${slot.key}" accept="image/*" style="display:none;"></label>`;
+      : `<label class="add-photo-btn" for="slotphoto-${slot.key}">+ Foto<input type="file" id="slotphoto-${slot.key}" data-slotphotoinput="${slot.key}" accept="image/*" style="display:none;"></label>`;
     const pairedHtml = slot.pairedTextKey ? `
       <div class="field" style="margin-top:8px; max-width:420px;">
         <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:4px;">${slot.pairedTextLabel}</label>
