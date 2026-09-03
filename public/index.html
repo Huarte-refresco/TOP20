@@ -478,20 +478,22 @@ const DEPARTMENTS = [
     ], notesLabel:'Comentarios' },
   { id:'control', name:'Control', fields:[], notesLabel:'Comentarios' },
   { id:'logistica', name:'Logística', fields:[], notesLabel:'Comentarios generales',
+    noGenericPhotos: true,
     photoSlots:[
       {key:'planSemanal', label:'Planificación semanal'},
       {key:'l8', label:'Prodplan L8', pairedTextKey:'comentariosL8', pairedTextLabel:'Comentarios L8'},
       {key:'l9', label:'Prodplan L9', pairedTextKey:'comentariosL9', pairedTextLabel:'Comentarios L9'},
     ]
   },
-  { id:'calidad', name:'Calidad', fields:[
-      {key:'ftr', label:'FTR %', type:'text'},
-    ], notesLabel:'Incidencias',
+  { id:'calidad', name:'Calidad', fields:[], notesLabel:'Incidencias',
     textSections:[
       {key:'reclamaciones', label:'Reclamaciones'},
     ],
+    photoSlots:[
+      {key:'ftr', label:'FTR'},
+    ],
     maxPhotos: 6,
-    photosLabel: 'Fotos (FTR y evidencias)'
+    photosLabel: 'Evidencias'
   },
   { id:'produccion', name:'Producción', fields:[
       {key:'oee_l29', label:'OEE Línea 29', type:'number'},
@@ -862,7 +864,9 @@ function informeTemplate(){
         ${slot.pairedTextKey ? `<div class="informe-notes">${escapeHtml(pairedText)}</div>` : ''}
       `;
     }).join('') : '';
-    const photosHtml = (!dept.photoSlots && (d.photos||[]).length) ? `<div class="informe-photos">${d.photos.map((p,i)=>`
+    const photosHtml = (!dept.noGenericPhotos && (d.photos||[]).length) ? `
+        ${dept.photoSlots ? `<h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">${dept.photosLabel || 'Fotos'}</h5>` : ''}
+        <div class="informe-photos">${d.photos.map((p,i)=>`
         <img src="${p.dataUrl}" data-lightbox="1" alt="${dept.name} foto ${i+1}">`).join('')}</div>` : '';
     const linkHtml = d.mediaLink ? `<div class="informe-link">🔗 <a href="${d.mediaLink}" target="_blank" rel="noopener">${d.mediaLink}</a></div>` : '';
     const jarabesInformeHtml = dept.id === 'produccion' ? `
@@ -1115,32 +1119,33 @@ function deptTemplate(dept){
         ${pairedHtml}
       </div>`;
   };
-  const photosBlockHtml = dept.photoSlots
-    ? `<div class="media-block">
-         <h3>Fotos</h3>
-         ${dept.photoSlots.map(photoSlotHtml).join('')}
-       </div>`
-    : (()=>{
-        const maxPhotos = dept.maxPhotos || 2;
-        return `<div class="media-block">
-        <h3>${dept.photosLabel || 'Fotos y vídeo'}</h3>
-        <p class="media-hint">Fotos: máx. ${maxPhotos}, se comprimen automáticamente. Para vídeo o más fotos, sube el archivo a Teams/OneDrive y pega aquí el enlace.</p>
-        <div class="photo-strip" id="photoStrip">
-          ${(d.photos||[]).map((p,i)=>`
-            <div class="photo-thumb">
-              <img src="${p.dataUrl}" alt="Foto ${i+1}" style="cursor:zoom-in;">
-              <button data-removephoto="${i}" title="Quitar foto">✕</button>
-            </div>`).join('')}
-          ${(d.photos||[]).length < maxPhotos ? `
-            <label class="add-photo-btn" for="photoInput">+ Foto<input type="file" id="photoInput" accept="image/*" style="display:none;"></label>
-          ` : ''}
-        </div>
-        <div class="field link-field">
+  const namedSlotsHtml = dept.photoSlots ? dept.photoSlots.map(photoSlotHtml).join('') : '';
+  const maxPhotos = dept.maxPhotos || 2;
+  const genericGalleryHtml = dept.noGenericPhotos ? '' : `
+        <div style="${dept.photoSlots ? 'margin-top:18px; padding-top:14px; border-top:1px solid var(--line);' : ''}">
+          ${dept.photoSlots ? `<div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:6px;">${dept.photosLabel || 'Fotos'}</div>` : ''}
+          <div class="photo-strip" id="photoStrip">
+            ${(d.photos||[]).map((p,i)=>`
+              <div class="photo-thumb">
+                <img src="${p.dataUrl}" alt="Foto ${i+1}" style="cursor:zoom-in;">
+                <button data-removephoto="${i}" title="Quitar foto">✕</button>
+              </div>`).join('')}
+            ${(d.photos||[]).length < maxPhotos ? `
+              <label class="add-photo-btn" for="photoInput">+ Foto<input type="file" id="photoInput" accept="image/*" style="display:none;"></label>
+            ` : ''}
+          </div>
+        </div>`;
+  const photosBlockHtml = `
+      <div class="media-block">
+        <h3>${dept.photoSlots ? 'Fotos' : (dept.photosLabel || 'Fotos y vídeo')}</h3>
+        ${!dept.photoSlots ? `<p class="media-hint">Fotos: máx. ${maxPhotos}, se comprimen automáticamente. Para vídeo o más fotos, sube el archivo a Teams/OneDrive y pega aquí el enlace.</p>` : ''}
+        ${namedSlotsHtml}
+        ${genericGalleryHtml}
+        <div class="field link-field" style="margin-top:14px;">
           <label>Enlace a vídeo / documento (Teams, OneDrive, SharePoint...)</label>
           <input type="text" id="mediaLinkInput" placeholder="https://..." value="${d.mediaLink||''}">
         </div>
       </div>`;
-      })();
 
   return `
     <div class="topline">
