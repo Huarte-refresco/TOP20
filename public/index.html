@@ -476,7 +476,7 @@ const DEPARTMENTS = [
       {key:'bajas', label:'Bajas', type:'number'},
       {key:'ett', label:'ETT', type:'number'},
     ], notesLabel:'Comentarios' },
-  { id:'control', name:'Control', fields:[], notesLabel:'Comentarios' },
+  { id:'controlling', name:'Controlling', fields:[], notesLabel:'Comentarios' },
   { id:'logistica', name:'Logística', fields:[], notesLabel:'Comentarios generales',
     noGenericPhotos: true,
     photoSlots:[
@@ -489,9 +489,9 @@ const DEPARTMENTS = [
     textSections:[
       {key:'reclamaciones', label:'Reclamaciones'},
     ],
-    photoSlots:[
-      {key:'ftr', label:'FTR'},
-    ],
+  maxPhotos: 6,
+    photosLabel: 'FTR',
+   
     maxPhotos: 6,
     photosLabel: 'Evidencias'
   },
