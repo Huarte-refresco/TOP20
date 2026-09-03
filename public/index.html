@@ -476,7 +476,7 @@ const DEPARTMENTS = [
       {key:'bajas', label:'Bajas', type:'number'},
       {key:'ett', label:'ETT', type:'number'},
     ], notesLabel:'Comentarios' },
-  { id:'control', name:'Control', fields:[], notesLabel:'Comentarios' },
+  { id:'control', name:'Controlling', fields:[], notesLabel:'Comentarios' },
   { id:'logistica', name:'Logística', fields:[], notesLabel:'Comentarios generales',
     noGenericPhotos: true,
     photoSlots:[
@@ -500,9 +500,9 @@ const DEPARTMENTS = [
       {key:'oee_l29', label:'OEE Línea 29', type:'number'},
       {key:'oee_l28', label:'OEE Línea 28', type:'number'},
     ], notesLabel:'Incidencias',
-    textSections:[
-      {key:'comentariosL29', label:'Comentarios Línea 29'},
-      {key:'comentariosL28', label:'Comentarios Línea 28'},
+    photoSlots:[
+      {key:'l9', label:'L9', pairedTextKey:'comentariosL9', pairedTextLabel:'Comentarios L9'},
+      {key:'l8', label:'L8', pairedTextKey:'comentariosL8', pairedTextLabel:'Comentarios L8'},
     ]
   },
   { id:'mto', name:'Mantenimiento', fields:[], notesLabel:'Incidencias' },
@@ -1214,15 +1214,27 @@ function deptTemplate(dept){
         <button class="btn btn-reset" id="resetBtn">Reiniciar</button>
       </div>
     </div>
-    ${topSlotsHtml}
+    ${dept.id === 'produccion' ? '' : topSlotsHtml}
     <div class="panel fields">
-      ${fieldsHtml}
-      ${textSectionsHtml}
-      <h3>${dept.notesLabel}</h3>
-      <textarea id="notesArea" placeholder="Escribe aquí...">${d.notes}</textarea>
-      ${jarabesHtml}
-      ${photosBlockHtml}
-      ${oeeHtml}
+      ${dept.id === 'produccion' ? `
+        ${namedSlotsHtml}
+        <h3>${dept.notesLabel}</h3>
+        <textarea id="notesArea" placeholder="Escribe aquí...">${d.notes}</textarea>
+        ${jarabesHtml}
+        <div class="media-block">
+          <h3>OEE por línea</h3>
+          ${fieldsHtml}
+        </div>
+        ${oeeHtml}
+      ` : `
+        ${fieldsHtml}
+        ${textSectionsHtml}
+        <h3>${dept.notesLabel}</h3>
+        <textarea id="notesArea" placeholder="Escribe aquí...">${d.notes}</textarea>
+        ${jarabesHtml}
+        ${photosBlockHtml}
+        ${oeeHtml}
+      `}
     </div>
   `;
 }
