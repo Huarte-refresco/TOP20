@@ -476,7 +476,7 @@ const DEPARTMENTS = [
       {key:'bajas', label:'Bajas', type:'number'},
       {key:'ett', label:'ETT', type:'number'},
     ], notesLabel:'Comentarios' },
-  { id:'control', name:'Controlling', fields:[], notesLabel:'Comentarios' },
+  { id:'control', name:'Control', fields:[], notesLabel:'Comentarios' },
   { id:'logistica', name:'Logística', fields:[], notesLabel:'Comentarios generales',
     noGenericPhotos: true,
     photoSlots:[
@@ -899,14 +899,24 @@ function informeTemplate(){
             <button class="btn ${d.running?'btn-stop':'btn-start'} btn-sm no-print" data-toggletimer="${dept.id}">${d.running?'Parar':'Iniciar'}</button>
           </div>
         </div>
-        ${fieldsHtml}
-        ${textSectionsHtml}
-        <div class="informe-notes">${escapeHtml(d.notes||'')}</div>
-        ${jarabesInformeHtml}
-        ${namedPhotosHtml}
-        ${photosHtml}
-        ${linkHtml}
-        ${oeeInformeHtml}
+        ${dept.id === 'produccion' ? `
+          ${namedPhotosHtml}
+          <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">Incidencias</h5>
+          <div class="informe-notes">${escapeHtml(d.notes||'')}</div>
+          ${jarabesInformeHtml}
+          <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:12px 0 4px;">OEE por línea</h5>
+          ${fieldsHtml}
+          ${oeeInformeHtml}
+        ` : `
+          ${fieldsHtml}
+          ${textSectionsHtml}
+          <div class="informe-notes">${escapeHtml(d.notes||'')}</div>
+          ${jarabesInformeHtml}
+          ${namedPhotosHtml}
+          ${photosHtml}
+          ${linkHtml}
+          ${oeeInformeHtml}
+        `}
       </div>`;
   }).join('');
 
