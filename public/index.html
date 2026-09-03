@@ -489,7 +489,9 @@ const DEPARTMENTS = [
     ], notesLabel:'Incidencias',
     textSections:[
       {key:'reclamaciones', label:'Reclamaciones'},
-    ]
+    ],
+    maxPhotos: 6,
+    photosLabel: 'Fotos (FTR y evidencias)'
   },
   { id:'produccion', name:'Producción', fields:[
       {key:'oee_l29', label:'OEE Línea 29', type:'number'},
@@ -1118,16 +1120,18 @@ function deptTemplate(dept){
          <h3>Fotos</h3>
          ${dept.photoSlots.map(photoSlotHtml).join('')}
        </div>`
-    : `<div class="media-block">
-        <h3>Fotos y vídeo</h3>
-        <p class="media-hint">Fotos: máx. 2, se comprimen automáticamente. Para vídeo o varias fotos, sube el archivo a Teams/OneDrive y pega aquí el enlace.</p>
+    : (()=>{
+        const maxPhotos = dept.maxPhotos || 2;
+        return `<div class="media-block">
+        <h3>${dept.photosLabel || 'Fotos y vídeo'}</h3>
+        <p class="media-hint">Fotos: máx. ${maxPhotos}, se comprimen automáticamente. Para vídeo o más fotos, sube el archivo a Teams/OneDrive y pega aquí el enlace.</p>
         <div class="photo-strip" id="photoStrip">
           ${(d.photos||[]).map((p,i)=>`
             <div class="photo-thumb">
               <img src="${p.dataUrl}" alt="Foto ${i+1}" style="cursor:zoom-in;">
               <button data-removephoto="${i}" title="Quitar foto">✕</button>
             </div>`).join('')}
-          ${(d.photos||[]).length < 2 ? `
+          ${(d.photos||[]).length < maxPhotos ? `
             <label class="add-photo-btn" for="photoInput">+ Foto<input type="file" id="photoInput" accept="image/*" style="display:none;"></label>
           ` : ''}
         </div>
@@ -1136,6 +1140,7 @@ function deptTemplate(dept){
           <input type="text" id="mediaLinkInput" placeholder="https://..." value="${d.mediaLink||''}">
         </div>
       </div>`;
+      })();
 
   return `
     <div class="topline">
