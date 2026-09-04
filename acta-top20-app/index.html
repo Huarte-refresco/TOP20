@@ -319,6 +319,7 @@
   .media-block h3{margin-bottom:8px;}
   .media-hint{font-size:12px; color:var(--ink-soft); margin:-4px 0 12px;}
   .photo-strip{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+  .photo-strip[tabindex]:focus{outline:2px solid var(--amber); outline-offset:3px; border-radius:8px;}
   .photo-thumb{
     position:relative; width:84px; height:84px; border-radius:7px; overflow:hidden;
     border:1px solid var(--line);
@@ -476,33 +477,38 @@ const DEPARTMENTS = [
       {key:'bajas', label:'Bajas', type:'number'},
       {key:'ett', label:'ETT', type:'number'},
     ], notesLabel:'Comentarios' },
-  { id:'controlling', name:'Controlling', fields:[], notesLabel:'Comentarios' },
+  { id:'controller', name:'Controller', fields:[], notesLabel:'Comentarios' },
   { id:'logistica', name:'Logística', fields:[], notesLabel:'Comentarios generales',
+    noGenericPhotos: true,
     photoSlots:[
       {key:'planSemanal', label:'Planificación semanal'},
       {key:'l8', label:'Prodplan L8', pairedTextKey:'comentariosL8', pairedTextLabel:'Comentarios L8'},
       {key:'l9', label:'Prodplan L9', pairedTextKey:'comentariosL9', pairedTextLabel:'Comentarios L9'},
     ]
   },
-  { id:'calidad', name:'Calidad', fields:[
-      {key:'ftr', label:'FTR %', type:'text'},
-    ], notesLabel:'Incidencias',
+  { id:'calidad', name:'Calidad', fields:[], notesLabel:'Incidencias',
     textSections:[
       {key:'reclamaciones', label:'Reclamaciones'},
-    ]
+    ],
+    photoSlots:[
+      {key:'ftr', label:'FTR', multi:true, max:8},
+    ],
+    slotsAtTop: true,
+    maxPhotos: 6,
+    photosLabel: 'Evidencias'
   },
   { id:'produccion', name:'Producción', fields:[
       {key:'oee_l29', label:'OEE Línea 29', type:'number'},
       {key:'oee_l28', label:'OEE Línea 28', type:'number'},
     ], notesLabel:'Incidencias',
-    textSections:[
-      {key:'comentariosL29', label:'Comentarios Línea 29'},
-      {key:'comentariosL28', label:'Comentarios Línea 28'},
+    photoSlots:[
+      {key:'l9', label:'L9', pairedTextKey:'comentariosL9', pairedTextLabel:'Comentarios L9'},
+      {key:'l8', label:'L8', pairedTextKey:'comentariosL8', pairedTextLabel:'Comentarios L8'},
     ]
   },
   { id:'mto', name:'Mantenimiento', fields:[], notesLabel:'Incidencias' },
   { id:'pex', name:'PEX', fields:[], notesLabel:'Incidencias' },
-  { id:'jefe planta', name:'Jefe de Planta', fields:[], notesLabel:'Cierre / Acciones' },
+  { id:'jefeplanta', name:'Jefe de Planta', fields:[], notesLabel:'Cierre / Acciones' },
 ];
 const OEE_LINES = [
   { key:'oee_l29', label:'OEE Línea 29' },
@@ -852,15 +858,28 @@ function informeTemplate(){
         <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">${sec.label}</h5>
         <div class="informe-notes">${escapeHtml((d.extra && d.extra[sec.key]) || '')}</div>`).join('');
     const namedPhotosHtml = dept.photoSlots ? dept.photoSlots.map(slot=>{
-      const photo = (d.namedPhotos && d.namedPhotos[slot.key]) || null;
       const pairedText = slot.pairedTextKey ? (d.extra && d.extra[slot.pairedTextKey]) || '' : '';
+      let photosMarkup;
+      if(slot.multi){
+        const arr = (d.namedPhotos && Array.isArray(d.namedPhotos[slot.key])) ? d.namedPhotos[slot.key] : [];
+        photosMarkup = arr.length
+          ? `<div class="informe-photos">${arr.map((p,i)=>`<img src="${p.dataUrl}" data-lightbox="1" alt="${slot.label} ${i+1}">`).join('')}</div>`
+          : `<p class="empty-note">Sin foto.</p>`;
+      } else {
+        const photo = (d.namedPhotos && d.namedPhotos[slot.key] && !Array.isArray(d.namedPhotos[slot.key])) ? d.namedPhotos[slot.key] : null;
+        photosMarkup = photo
+          ? `<div class="informe-photos"><img src="${photo.dataUrl}" data-lightbox="1" alt="${slot.label}"></div>`
+          : `<p class="empty-note">Sin foto.</p>`;
+      }
       return `
         <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">${slot.label}</h5>
-        ${photo ? `<div class="informe-photos"><img src="${photo.dataUrl}" data-lightbox="1" alt="${slot.label}"></div>` : `<p class="empty-note">Sin foto.</p>`}
+        ${photosMarkup}
         ${slot.pairedTextKey ? `<div class="informe-notes">${escapeHtml(pairedText)}</div>` : ''}
       `;
     }).join('') : '';
-    const photosHtml = (!dept.photoSlots && (d.photos||[]).length) ? `<div class="informe-photos">${d.photos.map((p,i)=>`
+    const photosHtml = (!dept.noGenericPhotos && (d.photos||[]).length) ? `
+        ${dept.photoSlots ? `<h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">${dept.photosLabel || 'Fotos'}</h5>` : ''}
+        <div class="informe-photos">${d.photos.map((p,i)=>`
         <img src="${p.dataUrl}" data-lightbox="1" alt="${dept.name} foto ${i+1}">`).join('')}</div>` : '';
     const linkHtml = d.mediaLink ? `<div class="informe-link">🔗 <a href="${d.mediaLink}" target="_blank" rel="noopener">${d.mediaLink}</a></div>` : '';
     const jarabesInformeHtml = dept.id === 'produccion' ? `
@@ -881,14 +900,24 @@ function informeTemplate(){
             <button class="btn ${d.running?'btn-stop':'btn-start'} btn-sm no-print" data-toggletimer="${dept.id}">${d.running?'Parar':'Iniciar'}</button>
           </div>
         </div>
-        ${fieldsHtml}
-        ${textSectionsHtml}
-        <div class="informe-notes">${escapeHtml(d.notes||'')}</div>
-        ${jarabesInformeHtml}
-        ${namedPhotosHtml}
-        ${photosHtml}
-        ${linkHtml}
-        ${oeeInformeHtml}
+        ${dept.id === 'produccion' ? `
+          ${namedPhotosHtml}
+          <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:10px 0 4px;">Incidencias</h5>
+          <div class="informe-notes">${escapeHtml(d.notes||'')}</div>
+          ${jarabesInformeHtml}
+          <h5 style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;margin:12px 0 4px;">OEE por línea</h5>
+          ${fieldsHtml}
+          ${oeeInformeHtml}
+        ` : `
+          ${fieldsHtml}
+          ${textSectionsHtml}
+          <div class="informe-notes">${escapeHtml(d.notes||'')}</div>
+          ${jarabesInformeHtml}
+          ${namedPhotosHtml}
+          ${photosHtml}
+          ${linkHtml}
+          ${oeeInformeHtml}
+        `}
       </div>`;
   }).join('');
 
@@ -1094,13 +1123,29 @@ function deptTemplate(dept){
       </div>` : '';
 
   const photoSlotHtml = (slot) => {
-    const photo = (d.namedPhotos && d.namedPhotos[slot.key]) || null;
-    const photoWidget = photo
-      ? `<div class="photo-thumb">
-           <img src="${photo.dataUrl}" alt="${slot.label}" style="cursor:zoom-in;">
-           <button data-removeslotphoto="${slot.key}" title="Quitar foto">✕</button>
-         </div>`
-      : `<label class="add-photo-btn" for="slotphoto-${slot.key}">+ Foto<input type="file" data-slotphotoinput="${slot.key}" accept="image/*" style="display:none;"></label>`;
+    let photoWidget;
+    if(slot.multi){
+      const arr = (d.namedPhotos && Array.isArray(d.namedPhotos[slot.key])) ? d.namedPhotos[slot.key] : [];
+      const maxN = slot.max || 6;
+      photoWidget = `<div class="photo-strip" data-pastetarget="multislot:${slot.key}" tabindex="0">
+        ${arr.map((p,i)=>`
+          <div class="photo-thumb">
+            <img src="${p.dataUrl}" alt="${slot.label} ${i+1}" style="cursor:zoom-in;">
+            <button data-removemultislotphoto="${slot.key}:${i}" title="Quitar foto">✕</button>
+          </div>`).join('')}
+        ${arr.length < maxN ? `<label class="add-photo-btn" for="slotphoto-${slot.key}">+ Foto<input type="file" id="slotphoto-${slot.key}" data-multislotphotoinput="${slot.key}" accept="image/*" style="display:none;"></label>` : ''}
+      </div>
+      ${arr.length < maxN ? `<p class="empty-note">O haz clic aquí y pega una imagen (Ctrl+V).</p>` : ''}`;
+    } else {
+      const photo = (d.namedPhotos && d.namedPhotos[slot.key] && !Array.isArray(d.namedPhotos[slot.key])) ? d.namedPhotos[slot.key] : null;
+      photoWidget = photo
+        ? `<div class="photo-strip"><div class="photo-thumb">
+             <img src="${photo.dataUrl}" alt="${slot.label}" style="cursor:zoom-in;">
+             <button data-removeslotphoto="${slot.key}" title="Quitar foto">✕</button>
+           </div></div>`
+        : `<div class="photo-strip" data-pastetarget="slot:${slot.key}" tabindex="0"><label class="add-photo-btn" for="slotphoto-${slot.key}">+ Foto<input type="file" id="slotphoto-${slot.key}" data-slotphotoinput="${slot.key}" accept="image/*" style="display:none;"></label></div>
+           <p class="empty-note">O haz clic aquí y pega una imagen (Ctrl+V).</p>`;
+    }
     const pairedHtml = slot.pairedTextKey ? `
       <div class="field" style="margin-top:8px; max-width:420px;">
         <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:4px;">${slot.pairedTextLabel}</label>
@@ -1109,29 +1154,47 @@ function deptTemplate(dept){
     return `
       <div style="margin-bottom:18px;">
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:6px;">${slot.label}</div>
-        <div class="photo-strip">${photoWidget}</div>
+        ${photoWidget}
         ${pairedHtml}
       </div>`;
   };
-  const photosBlockHtml = dept.photoSlots
-    ? `<div class="media-block">
-         <h3>Fotos</h3>
-         ${dept.photoSlots.map(photoSlotHtml).join('')}
-       </div>`
-    : `<div class="media-block">
-        <h3>Fotos y vídeo</h3>
-        <p class="media-hint">Fotos: máx. 2, se comprimen automáticamente. Para vídeo o varias fotos, sube el archivo a Teams/OneDrive y pega aquí el enlace.</p>
-        <div class="photo-strip" id="photoStrip">
-          ${(d.photos||[]).map((p,i)=>`
-            <div class="photo-thumb">
-              <img src="${p.dataUrl}" alt="Foto ${i+1}" style="cursor:zoom-in;">
-              <button data-removephoto="${i}" title="Quitar foto">✕</button>
-            </div>`).join('')}
-          ${(d.photos||[]).length < 2 ? `
-            <label class="add-photo-btn" for="photoInput">+ Foto<input type="file" id="photoInput" accept="image/*" style="display:none;"></label>
-          ` : ''}
-        </div>
-        <div class="field link-field">
+  const namedSlotsHtml = dept.photoSlots ? dept.photoSlots.map(photoSlotHtml).join('') : '';
+  const maxPhotos = dept.maxPhotos || 2;
+  const genericGalleryHtml = dept.noGenericPhotos ? '' : `
+        <div style="${dept.photoSlots ? 'margin-top:18px; padding-top:14px; border-top:1px solid var(--line);' : ''}">
+          ${dept.photoSlots ? `<div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:6px;">${dept.photosLabel || 'Fotos'}</div>` : ''}
+          <div class="photo-strip" id="photoStrip" data-pastetarget="generic" tabindex="0">
+            ${(d.photos||[]).map((p,i)=>`
+              <div class="photo-thumb">
+                <img src="${p.dataUrl}" alt="Foto ${i+1}" style="cursor:zoom-in;">
+                <button data-removephoto="${i}" title="Quitar foto">✕</button>
+              </div>`).join('')}
+            ${(d.photos||[]).length < maxPhotos ? `
+              <label class="add-photo-btn" for="photoInput">+ Foto<input type="file" id="photoInput" accept="image/*" style="display:none;"></label>
+            ` : ''}
+          </div>
+        </div>`;
+  const topSlotsHtml = (dept.photoSlots && dept.slotsAtTop) ? `
+      <div class="panel fields" style="margin-bottom:18px;">
+        ${namedSlotsHtml}
+      </div>` : '';
+  const photosBlockHtml = `
+      <div class="media-block">
+        ${(!dept.slotsAtTop) ? `<h3>${dept.photoSlots ? 'Fotos' : (dept.photosLabel || 'Fotos y vídeo')}</h3>` : (!dept.noGenericPhotos ? `<h3>${dept.photosLabel || 'Fotos y vídeo'}</h3>` : '')}
+        ${!dept.photoSlots ? `<p class="media-hint">Fotos: máx. ${maxPhotos}, se comprimen automáticamente. Haz clic en el recuadro de fotos y pega una imagen (Ctrl+V), o sube un archivo. Para vídeo o más fotos, usa Teams/OneDrive y pega aquí el enlace.</p>` : ''}
+        ${dept.slotsAtTop ? '' : namedSlotsHtml}
+        ${dept.slotsAtTop ? (dept.noGenericPhotos ? '' : `<div class="photo-strip" id="photoStrip" data-pastetarget="generic" tabindex="0">
+            ${(d.photos||[]).map((p,i)=>`
+              <div class="photo-thumb">
+                <img src="${p.dataUrl}" alt="Foto ${i+1}" style="cursor:zoom-in;">
+                <button data-removephoto="${i}" title="Quitar foto">✕</button>
+              </div>`).join('')}
+            ${(d.photos||[]).length < maxPhotos ? `
+              <label class="add-photo-btn" for="photoInput">+ Foto<input type="file" id="photoInput" accept="image/*" style="display:none;"></label>
+            ` : ''}
+          </div>
+          ${(d.photos||[]).length < maxPhotos ? `<p class="empty-note">O haz clic aquí y pega una imagen (Ctrl+V).</p>` : ''}`) : genericGalleryHtml}
+        <div class="field link-field" style="margin-top:14px;">
           <label>Enlace a vídeo / documento (Teams, OneDrive, SharePoint...)</label>
           <input type="text" id="mediaLinkInput" placeholder="https://..." value="${d.mediaLink||''}">
         </div>
@@ -1165,15 +1228,27 @@ function deptTemplate(dept){
         <button class="btn btn-reset" id="resetBtn">Reiniciar</button>
       </div>
     </div>
-
+    ${dept.id === 'produccion' ? '' : topSlotsHtml}
     <div class="panel fields">
-      ${fieldsHtml}
-      ${textSectionsHtml}
-      <h3>${dept.notesLabel}</h3>
-      <textarea id="notesArea" placeholder="Escribe aquí...">${d.notes}</textarea>
-      ${jarabesHtml}
-      ${photosBlockHtml}
-      ${oeeHtml}
+      ${dept.id === 'produccion' ? `
+        ${namedSlotsHtml}
+        <h3>${dept.notesLabel}</h3>
+        <textarea id="notesArea" placeholder="Escribe aquí...">${d.notes}</textarea>
+        ${jarabesHtml}
+        <div class="media-block">
+          <h3>OEE por línea</h3>
+          ${fieldsHtml}
+        </div>
+        ${oeeHtml}
+      ` : `
+        ${fieldsHtml}
+        ${textSectionsHtml}
+        <h3>${dept.notesLabel}</h3>
+        <textarea id="notesArea" placeholder="Escribe aquí...">${d.notes}</textarea>
+        ${jarabesHtml}
+        ${photosBlockHtml}
+        ${oeeHtml}
+      `}
     </div>
   `;
 }
@@ -1214,21 +1289,51 @@ function wireDeptEvents(dept){
     };
   });
 
-  const photoInput = document.getElementById('photoInput');
-  if(photoInput){
-    photoInput.onchange = async (e)=>{
-      const file = e.target.files[0];
-      if(!file) return;
-      try{
-        const dataUrl = await compressImage(file, 480, 0.45);
+  async function addPhotoFile(file, target){
+    if(!file) return;
+    try{
+      const dataUrl = await compressImage(file, 480, 0.45);
+      if(target.type === 'generic'){
         d.photos = d.photos || [];
         d.photos.push({ dataUrl });
-        scheduleSave(dept.id);
-        render();
-      }catch(err){
-        alert('No se ha podido procesar la foto. Prueba con otra imagen o usa el campo de enlace.');
+      } else if(target.type === 'slot'){
+        d.namedPhotos = d.namedPhotos || {};
+        d.namedPhotos[target.key] = { dataUrl };
+      } else if(target.type === 'multislot'){
+        d.namedPhotos = d.namedPhotos || {};
+        if(!Array.isArray(d.namedPhotos[target.key])) d.namedPhotos[target.key] = [];
+        d.namedPhotos[target.key].push({ dataUrl });
+      }
+      scheduleSave(dept.id);
+      render();
+    }catch(err){
+      alert('No se ha podido procesar la foto. Prueba con otra imagen.');
+    }
+  }
+  function getImageFromClipboard(e){
+    const items = (e.clipboardData || window.clipboardData) ? (e.clipboardData || window.clipboardData).items : null;
+    if(!items) return null;
+    for(const item of items){
+      if(item.type && item.type.indexOf('image/') === 0){
+        return item.getAsFile();
+      }
+    }
+    return null;
+  }
+  document.querySelectorAll('[data-pastetarget]').forEach(el=>{
+    el.onpaste = (e)=>{
+      const file = getImageFromClipboard(e);
+      if(file){
+        e.preventDefault();
+        const [type, key] = el.dataset.pastetarget.split(':');
+        addPhotoFile(file, type === 'generic' ? { type:'generic' } : { type, key });
       }
     };
+  });
+
+  const photoInput = document.getElementById('photoInput');
+  if(photoInput){
+    photoInput.onchange = (e)=> addPhotoFile(e.target.files[0], { type:'generic' });
   }
   document.querySelectorAll('[data-removephoto]').forEach(btn=>{
     btn.onclick = ()=>{
@@ -1252,25 +1357,24 @@ function wireDeptEvents(dept){
     };
   });
   document.querySelectorAll('[data-slotphotoinput]').forEach(inp=>{
-    inp.onchange = async (e)=>{
-      const file = e.target.files[0];
-      if(!file) return;
-      const slotKey = inp.dataset.slotphotoinput;
-      try{
-        const dataUrl = await compressImage(file, 480, 0.45);
-        d.namedPhotos = d.namedPhotos || {};
-        d.namedPhotos[slotKey] = { dataUrl };
-        scheduleSave(dept.id);
-        render();
-      }catch(err){
-        alert('No se ha podido procesar la foto. Prueba con otra imagen.');
-      }
-    };
+    inp.onchange = (e)=> addPhotoFile(e.target.files[0], { type:'slot', key: inp.dataset.slotphotoinput });
   });
   document.querySelectorAll('[data-removeslotphoto]').forEach(btn=>{
     btn.onclick = ()=>{
       const slotKey = btn.dataset.removeslotphoto;
       if(d.namedPhotos) delete d.namedPhotos[slotKey];
+      scheduleSave(dept.id);
+      render();
+    };
+  });
+  document.querySelectorAll('[data-multislotphotoinput]').forEach(inp=>{
+    inp.onchange = (e)=> addPhotoFile(e.target.files[0], { type:'multislot', key: inp.dataset.multislotphotoinput });
+  });
+  document.querySelectorAll('[data-removemultislotphoto]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const [slotKey, idxStr] = btn.dataset.removemultislotphoto.split(':');
+      const idx = parseInt(idxStr, 10);
+      if(d.namedPhotos && Array.isArray(d.namedPhotos[slotKey])) d.namedPhotos[slotKey].splice(idx,1);
       scheduleSave(dept.id);
       render();
     };
