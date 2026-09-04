@@ -319,6 +319,7 @@
   .media-block h3{margin-bottom:8px;}
   .media-hint{font-size:12px; color:var(--ink-soft); margin:-4px 0 12px;}
   .photo-strip{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+  .photo-strip[tabindex]:focus{outline:2px solid var(--amber); outline-offset:3px; border-radius:8px;}
   .photo-thumb{
     position:relative; width:84px; height:84px; border-radius:7px; overflow:hidden;
     border:1px solid var(--line);
@@ -476,7 +477,7 @@ const DEPARTMENTS = [
       {key:'bajas', label:'Bajas', type:'number'},
       {key:'ett', label:'ETT', type:'number'},
     ], notesLabel:'Comentarios' },
-  { id:'control', name:'Control', fields:[], notesLabel:'Comentarios' },
+  { id:'controller', name:'Controller', fields:[], notesLabel:'Comentarios' },
   { id:'logistica', name:'Logística', fields:[], notesLabel:'Comentarios generales',
     noGenericPhotos: true,
     photoSlots:[
@@ -1126,14 +1127,15 @@ function deptTemplate(dept){
     if(slot.multi){
       const arr = (d.namedPhotos && Array.isArray(d.namedPhotos[slot.key])) ? d.namedPhotos[slot.key] : [];
       const maxN = slot.max || 6;
-      photoWidget = `<div class="photo-strip">
+      photoWidget = `<div class="photo-strip" data-pastetarget="multislot:${slot.key}" tabindex="0">
         ${arr.map((p,i)=>`
           <div class="photo-thumb">
             <img src="${p.dataUrl}" alt="${slot.label} ${i+1}" style="cursor:zoom-in;">
             <button data-removemultislotphoto="${slot.key}:${i}" title="Quitar foto">✕</button>
           </div>`).join('')}
         ${arr.length < maxN ? `<label class="add-photo-btn" for="slotphoto-${slot.key}">+ Foto<input type="file" id="slotphoto-${slot.key}" data-multislotphotoinput="${slot.key}" accept="image/*" style="display:none;"></label>` : ''}
-      </div>`;
+      </div>
+      ${arr.length < maxN ? `<p class="empty-note">O haz clic aquí y pega una imagen (Ctrl+V).</p>` : ''}`;
     } else {
       const photo = (d.namedPhotos && d.namedPhotos[slot.key] && !Array.isArray(d.namedPhotos[slot.key])) ? d.namedPhotos[slot.key] : null;
       photoWidget = photo
@@ -1141,7 +1143,8 @@ function deptTemplate(dept){
              <img src="${photo.dataUrl}" alt="${slot.label}" style="cursor:zoom-in;">
              <button data-removeslotphoto="${slot.key}" title="Quitar foto">✕</button>
            </div></div>`
-        : `<div class="photo-strip"><label class="add-photo-btn" for="slotphoto-${slot.key}">+ Foto<input type="file" id="slotphoto-${slot.key}" data-slotphotoinput="${slot.key}" accept="image/*" style="display:none;"></label></div>`;
+        : `<div class="photo-strip" data-pastetarget="slot:${slot.key}" tabindex="0"><label class="add-photo-btn" for="slotphoto-${slot.key}">+ Foto<input type="file" id="slotphoto-${slot.key}" data-slotphotoinput="${slot.key}" accept="image/*" style="display:none;"></label></div>
+           <p class="empty-note">O haz clic aquí y pega una imagen (Ctrl+V).</p>`;
     }
     const pairedHtml = slot.pairedTextKey ? `
       <div class="field" style="margin-top:8px; max-width:420px;">
@@ -1160,7 +1163,7 @@ function deptTemplate(dept){
   const genericGalleryHtml = dept.noGenericPhotos ? '' : `
         <div style="${dept.photoSlots ? 'margin-top:18px; padding-top:14px; border-top:1px solid var(--line);' : ''}">
           ${dept.photoSlots ? `<div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin-bottom:6px;">${dept.photosLabel || 'Fotos'}</div>` : ''}
-          <div class="photo-strip" id="photoStrip">
+          <div class="photo-strip" id="photoStrip" data-pastetarget="generic" tabindex="0">
             ${(d.photos||[]).map((p,i)=>`
               <div class="photo-thumb">
                 <img src="${p.dataUrl}" alt="Foto ${i+1}" style="cursor:zoom-in;">
@@ -1178,9 +1181,9 @@ function deptTemplate(dept){
   const photosBlockHtml = `
       <div class="media-block">
         ${(!dept.slotsAtTop) ? `<h3>${dept.photoSlots ? 'Fotos' : (dept.photosLabel || 'Fotos y vídeo')}</h3>` : (!dept.noGenericPhotos ? `<h3>${dept.photosLabel || 'Fotos y vídeo'}</h3>` : '')}
-        ${!dept.photoSlots ? `<p class="media-hint">Fotos: máx. ${maxPhotos}, se comprimen automáticamente. Para vídeo o más fotos, sube el archivo a Teams/OneDrive y pega aquí el enlace.</p>` : ''}
+        ${!dept.photoSlots ? `<p class="media-hint">Fotos: máx. ${maxPhotos}, se comprimen automáticamente. Haz clic en el recuadro de fotos y pega una imagen (Ctrl+V), o sube un archivo. Para vídeo o más fotos, usa Teams/OneDrive y pega aquí el enlace.</p>` : ''}
         ${dept.slotsAtTop ? '' : namedSlotsHtml}
-        ${dept.slotsAtTop ? (dept.noGenericPhotos ? '' : `<div class="photo-strip" id="photoStrip">
+        ${dept.slotsAtTop ? (dept.noGenericPhotos ? '' : `<div class="photo-strip" id="photoStrip" data-pastetarget="generic" tabindex="0">
             ${(d.photos||[]).map((p,i)=>`
               <div class="photo-thumb">
                 <img src="${p.dataUrl}" alt="Foto ${i+1}" style="cursor:zoom-in;">
@@ -1189,7 +1192,8 @@ function deptTemplate(dept){
             ${(d.photos||[]).length < maxPhotos ? `
               <label class="add-photo-btn" for="photoInput">+ Foto<input type="file" id="photoInput" accept="image/*" style="display:none;"></label>
             ` : ''}
-          </div>`) : genericGalleryHtml}
+          </div>
+          ${(d.photos||[]).length < maxPhotos ? `<p class="empty-note">O haz clic aquí y pega una imagen (Ctrl+V).</p>` : ''}`) : genericGalleryHtml}
         <div class="field link-field" style="margin-top:14px;">
           <label>Enlace a vídeo / documento (Teams, OneDrive, SharePoint...)</label>
           <input type="text" id="mediaLinkInput" placeholder="https://..." value="${d.mediaLink||''}">
@@ -1285,21 +1289,51 @@ function wireDeptEvents(dept){
     };
   });
 
-  const photoInput = document.getElementById('photoInput');
-  if(photoInput){
-    photoInput.onchange = async (e)=>{
-      const file = e.target.files[0];
-      if(!file) return;
-      try{
-        const dataUrl = await compressImage(file, 480, 0.45);
+  async function addPhotoFile(file, target){
+    if(!file) return;
+    try{
+      const dataUrl = await compressImage(file, 480, 0.45);
+      if(target.type === 'generic'){
         d.photos = d.photos || [];
         d.photos.push({ dataUrl });
-        scheduleSave(dept.id);
-        render();
-      }catch(err){
-        alert('No se ha podido procesar la foto. Prueba con otra imagen o usa el campo de enlace.');
+      } else if(target.type === 'slot'){
+        d.namedPhotos = d.namedPhotos || {};
+        d.namedPhotos[target.key] = { dataUrl };
+      } else if(target.type === 'multislot'){
+        d.namedPhotos = d.namedPhotos || {};
+        if(!Array.isArray(d.namedPhotos[target.key])) d.namedPhotos[target.key] = [];
+        d.namedPhotos[target.key].push({ dataUrl });
+      }
+      scheduleSave(dept.id);
+      render();
+    }catch(err){
+      alert('No se ha podido procesar la foto. Prueba con otra imagen.');
+    }
+  }
+  function getImageFromClipboard(e){
+    const items = (e.clipboardData || window.clipboardData) ? (e.clipboardData || window.clipboardData).items : null;
+    if(!items) return null;
+    for(const item of items){
+      if(item.type && item.type.indexOf('image/') === 0){
+        return item.getAsFile();
+      }
+    }
+    return null;
+  }
+  document.querySelectorAll('[data-pastetarget]').forEach(el=>{
+    el.onpaste = (e)=>{
+      const file = getImageFromClipboard(e);
+      if(file){
+        e.preventDefault();
+        const [type, key] = el.dataset.pastetarget.split(':');
+        addPhotoFile(file, type === 'generic' ? { type:'generic' } : { type, key });
       }
     };
+  });
+
+  const photoInput = document.getElementById('photoInput');
+  if(photoInput){
+    photoInput.onchange = (e)=> addPhotoFile(e.target.files[0], { type:'generic' });
   }
   document.querySelectorAll('[data-removephoto]').forEach(btn=>{
     btn.onclick = ()=>{
@@ -1323,20 +1357,7 @@ function wireDeptEvents(dept){
     };
   });
   document.querySelectorAll('[data-slotphotoinput]').forEach(inp=>{
-    inp.onchange = async (e)=>{
-      const file = e.target.files[0];
-      if(!file) return;
-      const slotKey = inp.dataset.slotphotoinput;
-      try{
-        const dataUrl = await compressImage(file, 480, 0.45);
-        d.namedPhotos = d.namedPhotos || {};
-        d.namedPhotos[slotKey] = { dataUrl };
-        scheduleSave(dept.id);
-        render();
-      }catch(err){
-        alert('No se ha podido procesar la foto. Prueba con otra imagen.');
-      }
-    };
+    inp.onchange = (e)=> addPhotoFile(e.target.files[0], { type:'slot', key: inp.dataset.slotphotoinput });
   });
   document.querySelectorAll('[data-removeslotphoto]').forEach(btn=>{
     btn.onclick = ()=>{
@@ -1347,21 +1368,7 @@ function wireDeptEvents(dept){
     };
   });
   document.querySelectorAll('[data-multislotphotoinput]').forEach(inp=>{
-    inp.onchange = async (e)=>{
-      const file = e.target.files[0];
-      if(!file) return;
-      const slotKey = inp.dataset.multislotphotoinput;
-      try{
-        const dataUrl = await compressImage(file, 480, 0.45);
-        d.namedPhotos = d.namedPhotos || {};
-        if(!Array.isArray(d.namedPhotos[slotKey])) d.namedPhotos[slotKey] = [];
-        d.namedPhotos[slotKey].push({ dataUrl });
-        scheduleSave(dept.id);
-        render();
-      }catch(err){
-        alert('No se ha podido procesar la foto. Prueba con otra imagen.');
-      }
-    };
+    inp.onchange = (e)=> addPhotoFile(e.target.files[0], { type:'multislot', key: inp.dataset.multislotphotoinput });
   });
   document.querySelectorAll('[data-removemultislotphoto]').forEach(btn=>{
     btn.onclick = ()=>{
